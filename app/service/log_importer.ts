@@ -37,7 +37,7 @@ export default class LogImporter extends Service {
           const insertResult = await pool.exec({
             filePath,
             dbConfig: {
-              ...dbConfig,
+              serverConfig: dbConfig.serverConfig,
               db: dbConfig.getDb(f),
               table: dbConfig.getTable(f),
             },
@@ -70,15 +70,10 @@ export default class LogImporter extends Service {
     Array.from(new Set<string>(Object.keys(meta).map(k => dbConfig.getDb(k)))).forEach(d => {
       initQuerys.push(`CREATE DATABASE IF NOT EXISTS ${d}`);
     });
-    Array.from(new Set<{ db: string; table: string }>(Object.keys(meta).map(k => {
-      return {
-        db: dbConfig.getDb(k),
-        table: dbConfig.getTable(k),
-      };
-    }))).forEach(p => {
+    Array.from(new Map<string, string>(Object.keys(meta).map(k => [dbConfig.getTable(k), dbConfig.getDb(k)]))).forEach(p => {
       initQuerys.push(...[
-        `DROP TABLE IF EXISTS ${p.db}.${p.table}`,
-        `CREATE TABLE IF NOT EXISTS ${p.db}.${p.table}
+        `DROP TABLE IF EXISTS ${p[1]}.${p[0]}`,
+        `CREATE TABLE IF NOT EXISTS ${p[1]}.${p[0]}
 (
 ${getTableSchema(FieldMap)}
 ) ENGINE = MergeTree(created_date, (actor_id, repo_id, type), 8192)`,

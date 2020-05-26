@@ -16,19 +16,7 @@ export default class Clickhouse extends Service {
   }
 
   public async query<T>(q: string): Promise<T | undefined> {
-    return new Promise((resolve, reject) => {
-      this.client.querying(q, (e, res) => {
-        this.logger.info(res);
-        if (e) {
-          if (e.toString().includes('Unexpected end of JSON input')) {
-            return resolve();
-          }
-          reject(e);
-        } else {
-          resolve(res);
-        }
-      });
-    });
+    return this.client.querying(q);
   }
 
 }
