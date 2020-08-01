@@ -26,33 +26,34 @@ export default class LogImporter extends Service {
       size: config.workerNum,
       task: join(__dirname, '../importer_worker.js'),
     });
-    let importedCount = 0;
+    const params: { filePath: string; key: string }[] = [];
     for (const f in meta) {
-      // eslint-disable-next-line no-loop-func
-      (async () => {
-        const s = meta[f];
-        if (s === FileStatus.Verified) {
-          // import verified file
-          const filePath = join(config.baseDir, f);
-          const insertResult = await pool.exec({
-            filePath,
-            dbConfig: {
-              serverConfig: dbConfig.serverConfig,
-              db: dbConfig.getDb(f),
-              table: dbConfig.getTable(f),
-            },
-          });
-          if (insertResult) {
-            meta[f] = FileStatus.Imported;
-            importedCount++;
-          }
-          this.ctx.service.fileUtils.writeMetaData(meta);
-          if (importedCount % 1000 === 0) {
-            this.logger.info(`${importedCount} files have been imported.`);
-          }
-        }
-      })();
+      const s = meta[f];
+      if (s === FileStatus.Verified) {
+        const filePath = join(config.baseDir, f);
+        params.push({ filePath, key: f });
+      }
     }
+
+    let importedCount = 0;
+    await Promise.all(params.map(async p => {
+      const insertResult = await pool.exec({
+        filePath: p.filePath,
+        dbConfig: {
+          serverConfig: dbConfig.serverConfig,
+          db: dbConfig.getDb(p.key),
+          table: dbConfig.getTable(p.key),
+        },
+      });
+      if (insertResult) {
+        meta[p.key] = FileStatus.Imported;
+        importedCount++;
+      }
+      this.ctx.service.fileUtils.writeMetaData(meta);
+      if (importedCount % 1000 === 0) {
+        this.logger.info(`${importedCount} files have been imported.`);
+      }
+    }));
   }
 
   private async init(meta: any) {
