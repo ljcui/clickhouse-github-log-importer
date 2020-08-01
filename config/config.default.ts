@@ -31,6 +31,8 @@ export default (appInfo: EggAppInfo) => {
     downloaderNum: 3,
     downloaderTimeout: 5 * 60 * 1000,
     baseUrl: 'https://data.gharchive.org/',
+    // for checker
+    checkerNum: 6,
     // for importer
     workerNum: 6,
     metaFilePath: 'meta.json',
