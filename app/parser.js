@@ -36,6 +36,9 @@ function issuesParser(r) {
   const o = commonParser(r);
   const issue = r.payload.issue ?? r.payload.pull_request;
 
+  if (!issue) {
+    return null;
+  }
   o.issue_id = issue.id;
   o.issue_number = issue.number;
   o.issue_title = issue.title;
@@ -113,7 +116,7 @@ function pullRequestParser(r) {
   }
   o.repo_size = repo.size;
   o.repo_stargazers_count = repo.stargazers_count;
-  o.repo_forks_count = repo.forks_count;
+  o.repo_forks_count = (typeof repo.forks_count === 'string') ? 0 : repo.forks_count;
   if (repo.language) {
     o.repo_language = repo.language;
   }

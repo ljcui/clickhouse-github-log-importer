@@ -27,6 +27,11 @@ export default (appInfo: EggAppInfo) => {
 
   config.fileProcessor = {
     baseDir: '/Users/frankzhao/Documents/GHA_DATA',
+    // for downloader
+    downloaderNum: 3,
+    downloaderTimeout: 5 * 60 * 1000,
+    baseUrl: 'https://data.gharchive.org/',
+    // for importer
     workerNum: 6,
     metaFilePath: 'meta.json',
     lockFilePath: '.lock',
