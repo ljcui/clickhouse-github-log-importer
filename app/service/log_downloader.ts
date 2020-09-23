@@ -38,6 +38,8 @@ export default class LogDownloader extends Service {
     shuffleArray(params);
 
     let count = 0;
+    let notFoundCount = 0;
+    let timeoutCount = 0;
     await Promise.all(params.map(async param => {
       try {
         const result = await pool.exec(param, config.downloaderTimeout);
@@ -46,10 +48,13 @@ export default class LogDownloader extends Service {
           meta[param.key] = FileStatus.Downloaded;
           this.ctx.service.fileUtils.writeMetaData(meta);
           this.logger.info(`Download done, ${param.filePath}, ${count}/${params.length}`);
+        } else {
+          notFoundCount++;
         }
       } catch (e) {
         // may timeout
         if (isTimeoutError(e)) {
+          timeoutCount++;
           this.logger.info(`Time out for ${param.url}`);
           // if timeout, the file can't be intact, clean up
           if (existsSync(param.filePath)) {
@@ -58,5 +63,6 @@ export default class LogDownloader extends Service {
         }
       }
     }));
+    this.logger.info(`Total status: download count=${count}, not found count=${notFoundCount}, timeout count=${timeoutCount}`);
   }
 }

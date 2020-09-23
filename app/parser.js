@@ -116,7 +116,7 @@ function pullRequestParser(r) {
   }
   o.repo_size = repo.size;
   o.repo_stargazers_count = repo.stargazers_count;
-  o.repo_forks_count = (typeof repo.forks_count === 'string') ? 0 : repo.forks_count;
+  o.repo_forks_count = Number.isNaN(parseInt(repo.forks_count)) ? 0 : parseInt(repo.forks_count);
   if (repo.language) {
     o.repo_language = repo.language;
   }

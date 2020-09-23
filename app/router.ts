@@ -9,4 +9,5 @@ export default (app: Application) => {
   router.get('/query/record_count', controller.query.recordCount);
   router.get('/query/most_used_label', controller.query.mostUsedLabel);
 
+  router.get('/status', controller.status.get);
 };
