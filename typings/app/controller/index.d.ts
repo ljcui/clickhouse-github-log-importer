@@ -3,9 +3,11 @@
 
 import 'egg';
 import ExportQuery from '../../../app/controller/query';
+import ExportStatus from '../../../app/controller/status';
 
 declare module 'egg' {
   interface IController {
     query: ExportQuery;
+    status: ExportStatus;
   }
 }

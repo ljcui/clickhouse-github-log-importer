@@ -10,7 +10,7 @@
   "scripts": {
     "start": "tsc && egg-scripts start --max_old_space_size=8192 --daemon --title=egg-server-ghLogMgr --port=9238 --workers=1",
     "stop": "egg-scripts stop --title=egg-server-ghLogMgr",
-    "dev": "egg-bin --max_old_space_size=8192 dev --port=9238",
+    "dev": "egg-bin --max_old_space_size=8192 dev --port=9239",
     "debug": "egg-bin debug",
     "test-local": "egg-bin test",
     "test": "npm run lint -- --fix && npm run test-local",
