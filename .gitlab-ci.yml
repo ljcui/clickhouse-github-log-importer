@@ -1,0 +1,10 @@
+stages:
+- build
+
+build:
+  stage: build
+  tags:
+    - kfcoding
+  script:
+    - docker build -t $IMAGE .
+    - docker push $IMAGE
