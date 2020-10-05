@@ -1,6 +1,7 @@
 stages:
 - build
 - deploy
+- clean
 
 build:
   stage: build
@@ -19,3 +20,10 @@ deploy:
     - kubectl apply -f .k8s-resources/
   only:
     - prod
+
+clean:
+  stage: clean
+  tags:
+    - xlab
+  script:
+    - docker rmi $IMAGE
