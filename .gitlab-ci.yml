@@ -1,10 +1,21 @@
 stages:
 - build
+- deploy
 
 build:
   stage: build
   tags:
-    - kfcoding
+    - xlab
   script:
     - docker build -t $IMAGE .
+
+deploy:
+  stage: deploy
+  tags:
+    - xlab
+  script:
+    - docker login $LOGIN_INFO
     - docker push $IMAGE
+    - kubectl apply -f .k8s-resources/
+  only:
+    - prod
