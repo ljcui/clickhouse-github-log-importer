@@ -17,18 +17,20 @@ spec:
     spec:
       nodeSelector:
         node-name: node4
+      imagePullSecrets:
+        - name: xlab-registry-harbor
       containers:
-      - name: clickhouse-github-importer
-        image: registry.cn-shanghai.aliyuncs.com/envs/clickhouse-github-importer:latest
-        imagePullPolicy: Always
-        resources: {}
-        env:
-        - name: CLICKHOUSE_SERVER
-          value: "clickhouse-server"
-        volumeMounts:
-        - mountPath: /root/GHA_DATA
-          name: gha-data
+        - name: clickhouse-github-importer
+          image: harbor.ioedu.net/allspark/clickhouse-github-importer:latest
+          imagePullPolicy: Always
+          resources: {}
+          env:
+            - name: CLICKHOUSE_SERVER
+              value: "clickhouse-server"
+          volumeMounts:
+            - mountPath: /root/GHA_DATA
+              name: gha-data
       volumes:
-      - name: gha-data
-        hostPath:
-          path: /home/xlab/Data/GHA_DATA
+        - name: gha-data
+          hostPath:
+            path: /home/xlab/Data/GHA_DATA
