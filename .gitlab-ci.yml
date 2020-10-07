@@ -17,7 +17,7 @@ deploy:
   script:
     - docker login $LOGIN_INFO
     - docker push $IMAGE
-    # - kubectl apply -f .k8s-resources/
+    - kubectl apply -f .k8s-resources/
   only:
     - prod
 
