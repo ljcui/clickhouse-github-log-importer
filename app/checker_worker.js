@@ -25,9 +25,16 @@ async function checkFile(filePath) {
         crlfDelay: Infinity,
       });
 
+      let noError = true;
+
       rl.on('line', line => {
         if (line.trim().length >= 0) {
-          JSON.parse(line);
+          try {
+            JSON.parse(line);
+          } catch (e) {
+            console.log(`File ${filePath} parse exception.`, e);
+            noError = false;
+          }
         }
       });
 
@@ -35,7 +42,7 @@ async function checkFile(filePath) {
       fileStream.end();
       rl.close();
 
-      resolve(true);
+      resolve(noError);
     } catch (e) {
       console.log(`File ${filePath} parse exception.`, e);
       resolve(false);

@@ -22,8 +22,12 @@ async function readRecords(filePath) {
       });
 
       for await (const line of rl) {
-        const item = JSON.parse(line);
-        ret.push(ParseFuncMap.get(item.type)?.call(undefined, item));
+        try {
+          const item = JSON.parse(line);
+          ret.push(ParseFuncMap.get(item.type)?.call(undefined, item));
+        } catch {
+          console.log(`Error on parse record, line=${line}`);
+        }
       }
 
       resolve(ret);
@@ -34,7 +38,30 @@ async function readRecords(filePath) {
   });
 }
 
-async function insertRecords(f, r, dbConfig) {
+async function readExistIds(f, dbConfig) {
+  return new Promise(async resolve => {
+    const ids = new Set();
+    const matchResult = f.match(/.*\/(\d+)-(\d+)-(\d+)-(\d+).json.gz/);
+    if (!matchResult) {
+      resolve(ids);
+      return;
+    }
+    // careful about month which starts as 0 in js
+    const timestamp = Date.UTC(matchResult[1], parseInt(matchResult[2]) - 1, matchResult[3], matchResult[4]);
+    const start = (timestamp - 30 * 60 * 1000) / 1000;
+    const end = (timestamp + 90 * 60 * 1000) / 1000;
+    const client = new ClickHouse(dbConfig.serverConfig);
+    const stream = client.query(`SELECT id FROM ${dbConfig.db}.${dbConfig.table} WHERE created_at>toDateTime(${start}) AND created_at<toDateTime(${end})`);
+    stream.on('data', row => {
+      ids.add(row.id);
+    });
+    stream.on('end', () => {
+      resolve(ids);
+    });
+  });
+}
+
+async function insertRecords(f, r, ids, dbConfig) {
   return new Promise(resolve => {
     if (r.length <= 0) {
       return resolve(true);
@@ -52,7 +79,8 @@ async function insertRecords(f, r, dbConfig) {
       resolve(false);
     });
     for (const row of r) {
-      if (row) {
+      if (row && !ids.has(row.id)) {
+        ids.add(row.id);
         stream.write(row);
       }
     }
@@ -61,7 +89,12 @@ async function insertRecords(f, r, dbConfig) {
 }
 
 parentPort?.on('message', async param => {
-  const records = await readRecords(param.filePath);
-  const result = await insertRecords(param.filePath, records, param.dbConfig);
+  const [
+    records, ids,
+  ] = await Promise.all([
+    readRecords(param.filePath),
+    readExistIds(param.filePath, param.dbConfig),
+  ]);
+  const result = await insertRecords(param.filePath, records, ids, param.dbConfig);
   parentPort?.postMessage(result);
 });

@@ -13,7 +13,7 @@ function formatDateTime(d) {
 
 function commonParser(r) {
   const o = {
-    id: parseInt(r.id),
+    id: r.id,
     type: r.type,
     actor_id: r.actor.id,
     actor_login: r.actor.login,
@@ -43,9 +43,13 @@ function issuesParser(r) {
   o.issue_number = issue.number;
   o.issue_title = issue.title;
   o.issue_body = issue.body ?? '';
-  if (issue.labels) {
-    o.issue_labels = JSON.stringify(issue.labels);
+  if (!Array.isArray(issue.labels)) {
+    issue.labels = [];
   }
+  o['issue_labels.name'] = issue.labels.map(l => l.name ?? '');
+  o['issue_labels.color'] = issue.labels.map(l => l.color ?? '');
+  o['issue_labels.default'] = issue.labels.map(l => l.default ?? false);
+  o['issue_labels.description'] = issue.labels.map(l => l.description ?? '');
   if (issue.user) {
     o.issue_author_id = issue.user.id;
     o.issue_author_login = issue.user.login;
@@ -58,9 +62,12 @@ function issuesParser(r) {
     o.issue_assignee_id = issue.assignee.id;
     o.issue_assignee_login = issue.assignee.login;
   }
-  if (issue.assignees) {
-    o.issue_assignees = JSON.stringify(issue.assignees);
+
+  if (!Array.isArray(issue.assignees)) {
+    issue.assignees = [];
   }
+  o['issue_assignees.login'] = issue.assignees.map(a => a.login ?? '');
+  o['issue_assignees.id'] = issue.assignees.map(a => a.id ?? 0);
   o.issue_comments = issue.comments ?? 0;
   o.issue_created_at = formatDateTime(issue.created_at);
   o.issue_updated_at = formatDateTime(issue.updated_at);
@@ -97,6 +104,7 @@ function pullRequestParser(r) {
   o.pull_deletions = pull.deletions ?? 0;
   o.pull_changed_files = pull.changed_files ?? 0;
   o.pull_merged = pull.merged ?? false;
+  o.pull_merge_commit_sha = pull.merge_commit_sha ?? '';
   if (pull.merged_at) {
     o.pull_merged_at = formatDateTime(pull.merged_at);
   }
@@ -116,7 +124,7 @@ function pullRequestParser(r) {
   }
   o.repo_size = repo.size;
   o.repo_stargazers_count = repo.stargazers_count;
-  o.repo_forks_count = Number.isNaN(parseInt(repo.forks_count)) ? 0 : parseInt(repo.forks_count);
+  o.repo_forks_count = Math.max(Number.isNaN(parseInt(repo.forks_count)) ? 0 : parseInt(repo.forks_count), 0);
   if (repo.language) {
     o.repo_language = repo.language;
   }
@@ -172,7 +180,12 @@ function pushParser(r) {
   o.push_ref = r.payload.ref;
   o.push_head = r.payload.head;
   o.push_before = r.payload.before;
-  o.push_commits = JSON.stringify(r.payload.commits);
+  if (!Array.isArray(r.payload.commits)) {
+    r.payload.commits = [];
+  }
+  o['push_commits.name'] = r.payload.commits.map(c => (c.author ? c.author.name : ''));
+  o['push_commits.email'] = r.payload.commits.map(c => (c.author ? c.author.email : ''));
+  o['push_commits.message'] = r.payload.commits.map(c => c.message ?? '');
   return o;
 }
 
@@ -215,16 +228,12 @@ function createParser(r) {
 
 function gollumParser(r) {
   const o = commonParser(r);
-  const pages = r.payload.pages;
-  if (pages.length > 0) {
-    const page = pages[0];
-    o.gollum_page_name = page.page_name;
-    o.gollum_page_title = page.title;
-    o.gollum_summary = page.summary ?? '';
-    o.gollum_action = page.action;
-    o.gollum_sha = page.sha;
+  if (!Array.isArray(r.payload.pages)) {
+    r.payload.pages = [];
   }
-  o.gollum_json = JSON.stringify(pages);
+  o['gollum_pages.page_name'] = r.payload.pages.map(p => p.page_name ?? '');
+  o['gollum_pages.title'] = r.payload.pages.map(p => p.title ?? '');
+  o['gollum_pages.action'] = r.payload.pages.map(p => p.action ?? '');
   return o;
 }
 
@@ -260,9 +269,16 @@ function releaseParser(r) {
     o.release_published_at = formatDateTime(release.published_at);
   }
   o.release_body = release.body ?? '';
-  if (o.release_assets) {
-    o.release_assets = JSON.stringify(release.assets);
+  if (!Array.isArray(release.assets)) {
+    release.assets = [];
   }
+  o['release_assets.name'] = release.assets.map(a => a.name ?? '');
+  o['release_assets.uploader_login'] = release.assets.map(a => (a.uploader ? a.uploader.login : ''));
+  o['release_assets.uploader_id'] = release.assets.map(a => (a.uploader ? a.uploader.id : 0));
+  o['release_assets.content_type'] = release.assets.map(a => a.content_type ?? '');
+  o['release_assets.state'] = release.assets.map(a => a.state ?? '');
+  o['release_assets.size'] = release.assets.map(a => a.size ?? 0);
+  o['release_assets.download_count'] = release.assets.map(a => a.download_count ?? 0);
   return o;
 }
 

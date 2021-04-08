@@ -9,7 +9,7 @@ export async function waitFor(mill: number) {
 
 export const FieldMap = new Map<string, string>([
   // common
-  ['id', 'UInt64'],
+  ['id', 'String'],
   ['type', 'String'],
   ['action', 'String'],
   ['actor_id', 'UInt64'],
@@ -27,14 +27,24 @@ export const FieldMap = new Map<string, string>([
   ['issue_number', 'UInt32'],
   ['issue_title', 'String'],
   ['issue_body', 'String'],
-  ['issue_labels', 'String'],
+  ['issue_labels', `Nested
+  (
+    name String,
+    color String,
+    default UInt8,
+    description String
+  )`],
   ['issue_author_id', 'UInt64'],
   ['issue_author_login', 'String'],
   ['issue_author_type', 'String'],
   ['issue_author_association', 'String'],
   ['issue_assignee_id', 'UInt64'],
   ['issue_assignee_login', 'String'],
-  ['issue_assignees', 'String'],
+  ['issue_assignees', `Nested
+  (
+    login String,
+    id UInt64
+  )`],
   ['issue_created_at', 'DateTime'],
   ['issue_updated_at', 'DateTime'],
   ['issue_comments', 'UInt16'],
@@ -56,6 +66,7 @@ export const FieldMap = new Map<string, string>([
   ['pull_deletions', 'UInt16'],
   ['pull_changed_files', 'UInt32'],
   ['pull_merged', 'UInt8'],
+  ['pull_merge_commit_sha', 'String'],
   ['pull_merged_at', 'DateTime'],
   ['pull_merged_by_id', 'UInt64'],
   ['pull_merged_by_login', 'String'],
@@ -99,7 +110,12 @@ export const FieldMap = new Map<string, string>([
   ['push_ref', 'String'],
   ['push_head', 'String'],
   ['push_before', 'String'],
-  ['push_commits', 'String'],
+  ['push_commits', `Nested
+  (
+    name String,
+    email String,
+    message String
+  )`],
   // ForkEvent
   ['fork_forkee_id', 'UInt64'],
   ['fork_forkee_full_name', 'String'],
@@ -118,12 +134,12 @@ export const FieldMap = new Map<string, string>([
   ['create_description', 'String'],
   ['create_pusher_type', 'String'],
   // GollumEvent
-  ['gollum_page_name', 'String'],
-  ['gollum_page_title', 'String'],
-  ['gollum_summary', 'String'],
-  ['gollum_action', 'String'],
-  ['gollum_sha', 'String'],
-  ['gollum_json', 'String'],
+  ['gollum_pages', `Nested
+  (
+    page_name String,
+    title String,
+    action String
+  )`],
   // MemberEvent_added
   ['member_id', 'UInt64'],
   ['member_login', 'String'],
@@ -142,7 +158,16 @@ export const FieldMap = new Map<string, string>([
   ['release_created_at', 'DateTime'],
   ['release_published_at', 'DateTime'],
   ['release_body', 'String'],
-  ['release_assets', 'String'],
+  ['release_assets', `Nested
+  (
+    name String,
+    uploader_login String,
+    uploader_id UInt64,
+    content_type String,
+    state String,
+    size UInt64,
+    download_count UInt16
+  )`],
   // CommitCommentEvent_action
   ['commit_comment_id', 'UInt64'],
   ['commit_comment_author_id', 'UInt64'],

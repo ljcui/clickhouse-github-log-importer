@@ -2,9 +2,9 @@ import { Context } from 'egg';
 
 module.exports = {
   schedule: {
-    cron: '0 0 16 * * *',
+    cron: '0 0 2 * * *',
     type: 'worker',
-    immediate: false,
+    immediate: true,
   },
   async task(ctx: Context) {
     if (!ctx.service.fileUtils.tryLock()) {

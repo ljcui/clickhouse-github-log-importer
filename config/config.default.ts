@@ -22,11 +22,11 @@ export default (appInfo: EggAppInfo) => {
   };
 
   config.bodyParser = {
-    formLimit: '10kb',
+    formLimit: '1mb',
   };
 
   config.fileProcessor = {
-    baseDir: '/Users/frankzhao/Documents/GHA_DATA',
+    baseDir: process.env.DATA_DIR || 'GHA_DATA',
     // for downloader
     downloaderNum: 3,
     downloaderTimeout: 5 * 60 * 1000,
@@ -43,15 +43,17 @@ export default (appInfo: EggAppInfo) => {
       date.setHours(0, 0, 0, 0);
       return date;
     },
-    needInit: false,
+    forceInit: false,
   };
 
   config.clickhouse = {
     serverConfig: {
-      host: 'localhost',
+      host: process.env.CLICKHOUSE_SERVER || 'clickhouse',
       protocol: 'http:',
       port: 8123,
       format: 'JSON',
+      user: process.env.CLICKHOUSE_USER || 'USER',
+      password: process.env.CLICKHOUSE_PASSWORD || 'PASSWORD',
     },
     getDb: (): string => {
       return 'github_log';
