@@ -36,7 +36,7 @@ export default class LogImporter extends Service {
     let importedCount = 0;
     await Promise.all(params.map(async p => {
       const matchResult = p.filePath.match(/.*\/(\d+)-(\d+)-(\d+)-(\d+).json.gz/);
-      if (!matchResult || matchResult[1] !== '2020') {
+      if (!matchResult) {
         return;
       }
       const insertResult = await pool.exec({
