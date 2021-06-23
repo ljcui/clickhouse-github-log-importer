@@ -24,6 +24,9 @@ export default class LogImporter extends Service {
     const pool = new StaticPool({
       size: config.workerNum,
       task: join(__dirname, '../importer_worker.js'),
+      resourceLimits: {
+        maxOldGenerationSizeMb: config.workerMaxMemoryMb,
+      },
     });
     const params: { filePath: string; key: string }[] = [];
     for (const f in meta) {

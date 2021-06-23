@@ -35,6 +35,7 @@ export default (appInfo: EggAppInfo) => {
     checkerNum: 6,
     // for importer
     workerNum: 6,
+    workerMaxMemoryMb: 2048,
     metaFilePath: 'meta.json',
     lockFilePath: '.lock',
     startTime: new Date('2015-01-01'),
