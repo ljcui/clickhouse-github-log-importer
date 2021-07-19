@@ -2,6 +2,7 @@ import { Service } from 'egg';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { FileStatus } from '../types';
 import dateformat = require('dateformat');
+import { sep } from 'path';
 
 export default class UpdateStatus extends Service {
 
@@ -24,7 +25,7 @@ export default class UpdateStatus extends Service {
     const missingArr: string[] = [];
     for (const k of Object.keys(metaData)) {
       if (metaData[k] === FileStatus.NeedDownload) {
-        missingArr.push(k);
+        missingArr.push(k.substr(k.lastIndexOf(sep)));
       }
     }
 
