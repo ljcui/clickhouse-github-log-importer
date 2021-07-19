@@ -30,7 +30,7 @@ async function readExistIds(f, dbConfig) {
 }
 
 async function insertRecords(filePath, ids, dbConfig) {
-  return new Promise(resolve => {
+  return new Promise(async resolve => {
     try {
       if (!existsSync(filePath)) {
         resolve(true);
