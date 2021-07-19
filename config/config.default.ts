@@ -25,6 +25,8 @@ export default (appInfo: EggAppInfo) => {
     formLimit: '1mb',
   };
 
+  config.statusFilePath = './status.json';
+
   config.fileProcessor = {
     baseDir: process.env.DATA_DIR || 'GHA_DATA',
     // for downloader

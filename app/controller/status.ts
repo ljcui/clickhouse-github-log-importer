@@ -1,5 +1,6 @@
 /* eslint-disable array-bracket-spacing */
 import { Controller } from 'egg';
+import { readFileSync } from 'fs';
 import { FileStatus } from '../types';
 
 export default class Status extends Controller {
@@ -35,7 +36,11 @@ export default class Status extends Controller {
     const importedCount = stat.get(FileStatus.Imported) ?? 0;
     const verifiedCount = stat.get(FileStatus.Verified) ?? 0;
     const total = needDownloadCount + downloadedCount + importedCount + verifiedCount;
+
+    const fileContent = JSON.parse(readFileSync(ctx.app.config.statusFilePath).toString());
+
     this.ctx.body = {
+      ...fileContent,
       total,
       imported: importedCount,
       importFail: total - importedCount - needDownloadCount,
