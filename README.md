@@ -4,11 +4,11 @@
 
 ## 配置
 
-目前的项目配置主要分为两部分，即 ClickHouse 数据库配置和文件处理配置。所有配置的默认配置均在 [`config/config.default.ts`](config/config.default.ts) 文件中，如需修改，请在本地的 [`config/config.prod.ts`](config/config.prod.ts) 中修改相应配置项即可。
+目前的项目配置主要分为两部分，即 ClickHouse 数据库配置和文件处理配置。所有配置的默认配置均在 [`config/config.default.ts`](config/config.default.ts) 文件中。如果是 `npm start` 启动请在本地的 [`config/config.prod.ts`](config/config.prod.ts) 中修改相应配置项即可，如果是 `npm run dev` 启动请在本地的 [`config/config.local.ts`](config/config.local.ts) 中修改相应配置项即可。
 
 ### ClickHouse 数据库配置
 
-`ClickHouse` 数据库配置在 [`config.clickhouse`](config/config.default.ts#L42) 中，如下所示：
+`ClickHouse` 数据库配置在 [`config.clickhouse`](config/config.default.ts#L52) 中，如下所示：
 
 ``` typescript
 config.clickhouse = {
@@ -35,7 +35,7 @@ config.clickhouse = {
 
 ### 文件处理配置
 
-文件处理配置在 [`config.fileProcessor`](config/config.default.ts#L28) 中，如下所示：
+文件处理配置在 [`config.fileProcessor`](config/config.default.ts#L30) 中，如下所示：
 
 ```typescript
 config.fileProcessor = {
