@@ -25,7 +25,7 @@ export default class UpdateStatus extends Service {
     const missingArr: string[] = [];
     for (const k of Object.keys(metaData)) {
       if (metaData[k] === FileStatus.NeedDownload) {
-        missingArr.push(k.substr(k.lastIndexOf(sep)));
+        missingArr.push(k.substr(k.lastIndexOf(sep) + 1));
       }
     }
 
