@@ -1,5 +1,5 @@
 import { Service } from 'egg';
-import { existsSync, readFileSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { FileStatus } from '../types';
 import dateformat = require('dateformat');
 
@@ -35,6 +35,8 @@ export default class UpdateStatus extends Service {
     status.missingRate = (total - importedCount) / (total);
     status.missingArr = missingArr.sort();
     status.updateTime = dateformat(new Date(), 'yyyy-mm-dd HH:MM:ss');
+
+    writeFileSync(statusFilePath, JSON.stringify(status));
   }
 
 }
