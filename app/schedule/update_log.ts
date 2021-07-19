@@ -32,6 +32,8 @@ module.exports = {
       // import file
       await ctx.service.logImporter.import(metaData);
       showStat('Import finished,', metaData);
+
+      ctx.service.updateStatus.update();
     } catch (e) {
       ctx.logger.error(e);
     } finally {

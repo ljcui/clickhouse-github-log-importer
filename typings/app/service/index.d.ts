@@ -12,6 +12,7 @@ import ExportLogDownloader from '../../../app/service/log_downloader';
 import ExportLogExistChecker from '../../../app/service/log_exist_checker';
 import ExportLogImporter from '../../../app/service/log_importer';
 import ExportLogValidChecker from '../../../app/service/log_valid_checker';
+import ExportUpdateStatus from '../../../app/service/update_status';
 
 declare module 'egg' {
   interface IService {
@@ -21,5 +22,6 @@ declare module 'egg' {
     logExistChecker: AutoInstanceType<typeof ExportLogExistChecker>;
     logImporter: AutoInstanceType<typeof ExportLogImporter>;
     logValidChecker: AutoInstanceType<typeof ExportLogValidChecker>;
+    updateStatus: AutoInstanceType<typeof ExportUpdateStatus>;
   }
 }
