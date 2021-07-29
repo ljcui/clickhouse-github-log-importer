@@ -21,6 +21,9 @@ export default class LogValidChecker extends Service {
     const pool = new StaticPool({
       size: config.checkerNum,
       task: join(__dirname, '../checker_worker.js'),
+      resourceLimits: {
+        maxOldGenerationSizeMb: config.checkerMaxMemoryMb,
+      },
     });
     await Promise.all(params.map(async p => {
       const checkRes = await pool.exec({ filePath: p.filePath });
