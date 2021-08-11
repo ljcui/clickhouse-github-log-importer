@@ -8,10 +8,10 @@
     "declarations": true
   },
   "scripts": {
-    "start": "tsc && egg-scripts start --max_old_space_size=8192 --daemon --title=egg-server-ghLogMgr --port=9238 --workers=1",
-    "start-docker": "tsc && egg-scripts start --max_old_space_size=8192 --title=egg-server-ghLogMgr --port=9238 --workers=1",
+    "start": "tsc && egg-scripts start --max-old-space-size=8192 --daemon --title=egg-server-ghLogMgr --port=9238 --workers=1",
+    "start-docker": "tsc && egg-scripts start --max-old-space-size=8192 --title=egg-server-ghLogMgr --port=9238 --workers=1",
     "stop": "egg-scripts stop --title=egg-server-ghLogMgr",
-    "dev": "egg-bin --max_old_space_size=8192 dev --port=9239",
+    "dev": "egg-bin --max-old-space-size=8192 dev --port=9239",
     "debug": "egg-bin debug",
     "test-local": "egg-bin test",
     "test": "npm run lint -- --fix && npm run test-local",
