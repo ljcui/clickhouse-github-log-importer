@@ -34,11 +34,11 @@ export default (appInfo: EggAppInfo) => {
     downloaderTimeout: 5 * 60 * 1000,
     baseUrl: 'https://data.gharchive.org/',
     // for checker
-    checkerNum: 6,
-    checkerMaxMemoryMb: 512,
+    checkerNum: 3,
+    checkerMaxMemoryMb: 1024,
     // for importer
-    workerNum: 6,
-    workerMaxMemoryMb: 512,
+    workerNum: 3,
+    workerMaxMemoryMb: 1024,
     metaFilePath: 'meta.json',
     lockFilePath: '.lock',
     startTime: new Date('2015-01-01'),

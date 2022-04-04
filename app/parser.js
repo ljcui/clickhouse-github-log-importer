@@ -4,11 +4,11 @@ const dateformat = require('dateformat');
 
 // use true as third param to convert to UTC time
 function formatDate(d) {
-  return dateformat(new Date(d), 'yyyy-mm-dd');
+  return dateformat(new Date(d), 'yyyy-mm-dd', true);
 }
 
 function formatDateTime(d) {
-  return dateformat(new Date(d), 'yyyy-mm-dd HH:MM:ss');
+  return dateformat(new Date(d), 'yyyy-mm-dd HH:MM:ss', true);
 }
 
 function commonParser(r) {
