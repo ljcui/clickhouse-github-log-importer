@@ -59,12 +59,8 @@ export default (appInfo: EggAppInfo) => {
       user: process.env.CLICKHOUSE_USER || 'USER',
       password: process.env.CLICKHOUSE_PASSWORD || 'PASSWORD',
     },
-    getDb: (): string => {
-      return 'github_log';
-    },
-    getTable: (fileName: string): string => {
-      return `year${fileName.substring(0, 4)}`;
-    },
+    db: 'github_log',
+    table: 'events',
   };
 
   // the return config will combines to EggAppConfig

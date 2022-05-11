@@ -11,7 +11,7 @@ export default class LogImporter extends Service {
   public async import(meta: any) {
     const config = this.config.fileProcessor;
     const dbConfig = this.config.clickhouse;
-    await this.init(meta, config.forceInit);
+    await this.init(config.forceInit);
     if (config.forceInit) {
       for (const k in meta) {
         if (meta[k] === FileStatus.Imported) {
@@ -46,8 +46,8 @@ export default class LogImporter extends Service {
         filePath: p.filePath,
         dbConfig: {
           serverConfig: dbConfig.serverConfig,
-          db: dbConfig.getDb(p.key),
-          table: dbConfig.getTable(p.key),
+          db: dbConfig.db,
+          table: dbConfig.table,
         },
       });
       if (insertResult) {
@@ -59,32 +59,30 @@ export default class LogImporter extends Service {
         }
       }
     }));
+
+    this.logger.info('All files have been imported');
+    await this.service.clickhouse.query(`OPTIMIZE TABLE ${dbConfig.db}.${dbConfig.table} FINAL DEDUPLICATE`);
   }
 
-  private async init(meta: any, forceInit: boolean) {
+  private async init(forceInit: boolean) {
     this.logger.info('Start to init database');
     const dbConfig = this.config.clickhouse;
     const getTableSchema = (map: Map<string, string>): string => {
       let ret = '';
-      // eslint-disable-next-line array-bracket-spacing
       for (const [key, value] of map) {
         ret += `\`${key}\` ${value},${EOL}`;
       }
       return ret.substring(0, ret.length - 2) + EOL;
     };
     const initQuerys: string[] = [];
-    Array.from(new Set<string>(Object.keys(meta).map(k => dbConfig.getDb(k)))).forEach(d => {
-      initQuerys.push(`CREATE DATABASE IF NOT EXISTS ${d}`);
-    });
-    Array.from(new Map<string, string>(Object.keys(meta).map(k => [dbConfig.getTable(k), dbConfig.getDb(k)]))).forEach(p => {
-      if (forceInit) {
-        initQuerys.push(`DROP TABLE IF EXISTS ${p[1]}.${p[0]}`);
-      }
-      initQuerys.push(`CREATE TABLE IF NOT EXISTS ${p[1]}.${p[0]}
+    initQuerys.push(`CREATE DATABASE IF NOT EXISTS ${dbConfig.db}`);
+    if (forceInit) {
+      initQuerys.push(`DROP TABLE IF EXISTS ${dbConfig.db}.${dbConfig.table}`);
+    }
+    initQuerys.push(`CREATE TABLE IF NOT EXISTS ${dbConfig.db}.${dbConfig.table}
 (
 ${getTableSchema(FieldMap)}
-) ENGINE = MergeTree(created_date, (actor_id, repo_id, type), 8192)`);
-    });
+) ENGINE = MergeTree ORDER BY (type, repo_name, created_at);`);
     for (const q of initQuerys) {
       await this.ctx.service.clickhouse.query(q);
     }

@@ -18,20 +18,12 @@ config.clickhouse = {
     port: 8123,
     format: 'JSON',
   },
-  getDb: (fileName: string): string => {
-    return 'github_log';
-  },
-  getTable: (fileName: string): string => {
-    return `year${fileName.substring(0, 4)}`;
-  },
+  db: 'github_log',
+  table: 'events',
 };
 ```
 
 其中 `serverConfig` 为直接传递给 `ClickHouse` 客户端 Driver 的配置，可根据自己的需求进行添加和修改，该项目使用的 `ClickHouse` 客户端为 [`node-clickhouse`](https://github.com/apla/node-clickhouse)。
-
-`getDb` 函数返回数据库的库名，传入参数为每个处理文件的文件名，可根据文件名返回不同的数据库名。默认为同一个库，即 `github_log`。
-
-`getTable` 函数返回的是表名，传入参数为每个处理文件的文件名，可根据文件名返回不同的表名。默认是根据文件所在年份返回如 `year2015` 等不同表名。
 
 ### 文件处理配置
 

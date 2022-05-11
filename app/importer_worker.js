@@ -6,30 +6,7 @@ const { createGunzip } = require('zlib');
 const { createInterface } = require('readline');
 const ClickHouse = require('@apla/clickhouse');
 
-async function readExistIds(f, dbConfig) {
-  return new Promise(async resolve => {
-    const ids = new Set();
-    const matchResult = f.match(/.*\/(\d+)-(\d+)-(\d+)-(\d+).json.gz/);
-    if (!matchResult) {
-      resolve(ids);
-      return;
-    }
-    // careful about month which starts as 0 in js
-    const timestamp = Date.UTC(matchResult[1], parseInt(matchResult[2]) - 1, matchResult[3], matchResult[4]);
-    const start = (timestamp - 30 * 60 * 1000) / 1000;
-    const end = (timestamp + 90 * 60 * 1000) / 1000;
-    const client = new ClickHouse(dbConfig.serverConfig);
-    const stream = client.query(`SELECT id FROM ${dbConfig.db}.${dbConfig.table} WHERE created_at>toDateTime(${start}) AND created_at<toDateTime(${end})`);
-    stream.on('data', row => {
-      ids.add(row.id);
-    });
-    stream.on('end', () => {
-      resolve(ids);
-    });
-  });
-}
-
-async function insertRecords(filePath, ids, dbConfig) {
+async function insertRecords(filePath, dbConfig) {
   return new Promise(async resolve => {
     try {
       if (!existsSync(filePath)) {
@@ -65,9 +42,7 @@ async function insertRecords(filePath, ids, dbConfig) {
         try {
           const item = JSON.parse(line);
           const row = ParseFuncMap.get(item.type)?.call(undefined, item);
-          if (!ids.has(row.id)) {
-            stream.write(row);
-          }
+          stream.write(row);
         } catch {
           console.log(`Error on parse record, line=${line}`);
         }
@@ -83,7 +58,6 @@ async function insertRecords(filePath, ids, dbConfig) {
 }
 
 parentPort?.on('message', async param => {
-  const ids = await readExistIds(param.filePath, param.dbConfig);
-  const result = await insertRecords(param.filePath, ids, param.dbConfig);
+  const result = await insertRecords(param.filePath, param.dbConfig);
   parentPort?.postMessage(result);
 });

@@ -15,7 +15,7 @@ const fileDownload = (url, output) => {
       unlinkSync(output);
     }
     // use Linux wget to retrive file into certain dir
-    const command = `wget -P ${dir} ${url}`;
+    const command = `wget -c -P ${dir} ${url}`;
     exec(command, err => {
       if (err) {
         // if error happens, file can't be intact, clean up

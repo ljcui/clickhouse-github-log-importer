@@ -7,17 +7,24 @@ export async function waitFor(mill: number) {
   });
 }
 
+const userType = "Enum('Bot' = 1, 'Mannequin' = 2, 'Organization' = 3, 'User' = 4)";
+const associationType = "Enum('COLLABORATOR' = 1, 'CONTRIBUTOR' = 2, 'MEMBER' = 3, 'NONE' = 4, 'OWNER' = 5)";
+
 export const FieldMap = new Map<string, string>([
   // common
   ['id', 'String'],
-  ['type', 'String'],
-  ['action', 'String'],
+  ['type', `Enum('CommitCommentEvent' = 1, 'CreateEvent' = 2, 'DeleteEvent' = 3, 'ForkEvent' = 4,
+                    'GollumEvent' = 5, 'IssueCommentEvent' = 6, 'IssuesEvent' = 7, 'MemberEvent' = 8,
+                    'PublicEvent' = 9, 'PullRequestEvent' = 10, 'PullRequestReviewCommentEvent' = 11,
+                    'PushEvent' = 12, 'ReleaseEvent' = 13, 'WatchEvent' = 14, 'PullRequestReviewEvent' = 15)`],
+  ['action', `Enum('added' = 1, 'closed' = 2, 'created' = 3, 'labeled' = 4, 'opened' = 5, 'published' = 6,
+                    'reopened' = 7, 'started' = 8)`],
   ['actor_id', 'UInt64'],
-  ['actor_login', 'String'],
+  ['actor_login', 'LowCardinality(String)'],
   ['repo_id', 'UInt64'],
-  ['repo_name', 'String'],
+  ['repo_name', 'LowCardinality(String)'],
   ['org_id', 'UInt64'],
-  ['org_login', 'String'],
+  ['org_login', 'LowCardinality(String)'],
   ['created_at', 'DateTime'],
   ['created_date', 'Date'],
   // IssuesEvent_opened
@@ -35,14 +42,14 @@ export const FieldMap = new Map<string, string>([
     description String
   )`],
   ['issue_author_id', 'UInt64'],
-  ['issue_author_login', 'String'],
-  ['issue_author_type', 'String'],
-  ['issue_author_association', 'String'],
+  ['issue_author_login', 'LowCardinality(String)'],
+  ['issue_author_type', userType],
+  ['issue_author_association', associationType],
   ['issue_assignee_id', 'UInt64'],
-  ['issue_assignee_login', 'String'],
+  ['issue_assignee_login', 'LowCardinality(String)'],
   ['issue_assignees', `Nested
   (
-    login String,
+    login LowCardinality(String),
     id UInt64
   )`],
   ['issue_created_at', 'DateTime'],
@@ -54,10 +61,10 @@ export const FieldMap = new Map<string, string>([
   ['issue_comment_body', 'String'],
   ['issue_comment_created_at', 'DateTime'],
   ['issue_comment_updated_at', 'DateTime'],
-  ['issue_comment_author_association', 'String'],
+  ['issue_comment_author_association', associationType],
   ['issue_comment_author_id', 'UInt64'],
-  ['issue_comment_author_login', 'String'],
-  ['issue_comment_author_type', 'String'],
+  ['issue_comment_author_login', 'LowCardinality(String)'],
+  ['issue_comment_author_type', userType],
   // PullRequestEvent_opened
   // PullRequestEvent_reopened
   // PullRequestEvent_closed
@@ -69,11 +76,11 @@ export const FieldMap = new Map<string, string>([
   ['pull_merge_commit_sha', 'String'],
   ['pull_merged_at', 'DateTime'],
   ['pull_merged_by_id', 'UInt64'],
-  ['pull_merged_by_login', 'String'],
-  ['pull_merged_by_type', 'String'],
+  ['pull_merged_by_login', 'LowCardinality(String)'],
+  ['pull_merged_by_type', userType],
   ['pull_requested_reviewer_id', 'UInt64'],
-  ['pull_requested_reviewer_login', 'String'],
-  ['pull_requested_reviewer_type', 'String'],
+  ['pull_requested_reviewer_login', 'LowCardinality(String)'],
+  ['pull_requested_reviewer_type', userType],
   ['pull_review_comments', 'UInt16'],
 
   ['repo_description', 'String'],
@@ -97,9 +104,9 @@ export const FieldMap = new Map<string, string>([
   ['pull_review_comment_path', 'String'],
   ['pull_review_comment_position', 'String'],
   ['pull_review_comment_author_id', 'UInt64'],
-  ['pull_review_comment_author_login', 'String'],
-  ['pull_review_comment_author_type', 'String'],
-  ['pull_review_comment_author_association', 'String'],
+  ['pull_review_comment_author_login', 'LowCardinality(String)'],
+  ['pull_review_comment_author_type', userType],
+  ['pull_review_comment_author_association', associationType],
   ['pull_review_comment_body', 'String'],
   ['pull_review_comment_created_at', 'DateTime'],
   ['pull_review_comment_updated_at', 'DateTime'],
@@ -112,27 +119,27 @@ export const FieldMap = new Map<string, string>([
   ['push_before', 'String'],
   ['push_commits', `Nested
   (
-    name String,
+    name LowCardinality(String),
     email String,
     message String
   )`],
   // ForkEvent
   ['fork_forkee_id', 'UInt64'],
-  ['fork_forkee_full_name', 'String'],
+  ['fork_forkee_full_name', 'LowCardinality(String)'],
   ['fork_forkee_owner_id', 'UInt64'],
-  ['fork_forkee_owner_login', 'String'],
-  ['fork_forkee_owner_type', 'String'],
+  ['fork_forkee_owner_login', 'LowCardinality(String)'],
+  ['fork_forkee_owner_type', userType],
   // WatchEvent_started, none
   // DeleteEvent
   ['delete_ref', 'String'],
   ['delete_ref_type', 'String'],
-  ['delete_pusher_type', 'String'],
+  ['delete_pusher_type', "Enum('deploy_key' = 1, 'user' = 2)"],
   // CreateEvent
   ['create_ref', 'String'],
-  ['create_ref_type', 'String'],
+  ['create_ref_type', "Enum('branch' = 1, 'tag' = 2)"],
   ['create_master_branch', 'String'],
   ['create_description', 'String'],
-  ['create_pusher_type', 'String'],
+  ['create_pusher_type', "Enum('deploy_key' = 1, 'user' = 2)"],
   // GollumEvent
   ['gollum_pages', `Nested
   (
@@ -142,8 +149,8 @@ export const FieldMap = new Map<string, string>([
   )`],
   // MemberEvent_added
   ['member_id', 'UInt64'],
-  ['member_login', 'String'],
-  ['member_type', 'String'],
+  ['member_login', 'LowCardinality(String)'],
+  ['member_type', userType],
   // PublicEvent, none
   // ReleaseEvent_published
   ['release_id', 'UInt64'],
@@ -152,8 +159,8 @@ export const FieldMap = new Map<string, string>([
   ['release_name', 'String'],
   ['release_draft', 'UInt8'],
   ['release_author_id', 'UInt64'],
-  ['release_author_login', 'String'],
-  ['release_author_type', 'String'],
+  ['release_author_login', 'LowCardinality(String)'],
+  ['release_author_type', userType],
   ['release_prerelease', 'UInt8'],
   ['release_created_at', 'DateTime'],
   ['release_published_at', 'DateTime'],
@@ -161,9 +168,9 @@ export const FieldMap = new Map<string, string>([
   ['release_assets', `Nested
   (
     name String,
-    uploader_login String,
+    uploader_login LowCardinality(String),
     uploader_id UInt64,
-    content_type String,
+    content_type LowCardinality(String),
     state String,
     size UInt64,
     download_count UInt16
@@ -171,9 +178,9 @@ export const FieldMap = new Map<string, string>([
   // CommitCommentEvent_action
   ['commit_comment_id', 'UInt64'],
   ['commit_comment_author_id', 'UInt64'],
-  ['commit_comment_author_login', 'String'],
-  ['commit_comment_author_type', 'String'],
-  ['commit_comment_author_association', 'String'],
+  ['commit_comment_author_login', 'LowCardinality(String)'],
+  ['commit_comment_author_type', userType],
+  ['commit_comment_author_association', associationType],
   ['commit_comment_body', 'String'],
   ['commit_comment_path', 'String'],
   ['commit_comment_position', 'String'],
