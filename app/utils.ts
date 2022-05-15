@@ -8,7 +8,7 @@ export async function waitFor(mill: number) {
 }
 
 const userType = "Enum('Bot' = 1, 'Mannequin' = 2, 'Organization' = 3, 'User' = 4)";
-const associationType = "Enum('COLLABORATOR' = 1, 'CONTRIBUTOR' = 2, 'MEMBER' = 3, 'NONE' = 4, 'OWNER' = 5)";
+const associationType = "Enum('COLLABORATOR' = 1, 'CONTRIBUTOR' = 2, 'MEMBER' = 3, 'NONE' = 4, 'OWNER' = 5, 'MANNEQUIN' = 6)";
 
 export const FieldMap = new Map<string, string>([
   // common
