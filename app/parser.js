@@ -13,7 +13,7 @@ function formatDateTime(d) {
 
 function commonParser(r) {
   const o = {
-    id: r.id,
+    id: parseInt(r.id),
     type: r.type,
     actor_id: r.actor.id,
     actor_login: r.actor.login,
