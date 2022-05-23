@@ -61,7 +61,6 @@ export default class LogImporter extends Service {
     }));
 
     this.logger.info('All files have been imported');
-    await this.service.clickhouse.query(`OPTIMIZE TABLE ${dbConfig.db}.${dbConfig.table} FINAL DEDUPLICATE`);
   }
 
   private async init(forceInit: boolean) {
@@ -82,7 +81,9 @@ export default class LogImporter extends Service {
     initQuerys.push(`CREATE TABLE IF NOT EXISTS ${dbConfig.db}.${dbConfig.table}
 (
 ${getTableSchema(FieldMap)}
-) ENGINE = MergeTree ORDER BY (type, repo_name, created_at);`);
+) ENGINE = ReplacingMergeTree(id)
+PARTITION BY toYYYYMM(created_at)
+ORDER BY (type, repo_name, created_at);`);
     for (const q of initQuerys) {
       await this.ctx.service.clickhouse.query(q);
     }
