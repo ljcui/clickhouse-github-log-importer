@@ -42,11 +42,7 @@ export default (appInfo: EggAppInfo) => {
     metaFilePath: 'meta.json',
     lockFilePath: '.lock',
     startTime: new Date('2015-01-01'),
-    getEndTime: () => {
-      const date = new Date(new Date().getTime() - 24 * 60 * 60 * 1000);
-      date.setHours(0, 0, 0, 0);
-      return date;
-    },
+    getEndTime: () => new Date(),
     forceInit: false,
   };
 
