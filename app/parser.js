@@ -3,10 +3,6 @@
 const dateformat = require('dateformat');
 
 // use true as third param to convert to UTC time
-function formatDate(d) {
-  return dateformat(new Date(d), 'yyyy-mm-dd', true);
-}
-
 function formatDateTime(d) {
   return dateformat(new Date(d), 'yyyy-mm-dd HH:MM:ss', true);
 }
@@ -20,7 +16,6 @@ function commonParser(r) {
     repo_id: r.repo.id,
     repo_name: r.repo.name,
     created_at: formatDateTime(r.created_at),
-    created_date: formatDate(r.created_at),
   };
   if (r.payload.action) {
     o.action = r.payload.action;
@@ -42,7 +37,7 @@ function issuesParser(r) {
   o.issue_id = issue.id;
   o.issue_number = issue.number;
   o.issue_title = issue.title;
-  o.issue_body = issue.body ?? '';
+  o.body = issue.body ?? '';
   if (!Array.isArray(issue.labels)) {
     issue.labels = [];
   }
@@ -81,7 +76,7 @@ function issueCommentParser(r) {
   const o = issuesParser(r);
   const comment = r.payload.comment;
   o.issue_comment_id = comment.id;
-  o.issue_comment_body = comment.body;
+  o.body = comment.body;
   o.issue_comment_created_at = formatDateTime(comment.created_at);
   o.issue_comment_updated_at = formatDateTime(comment.updated_at);
   o.issue_comment_author_id = comment.user.id;
@@ -166,7 +161,7 @@ function pullRequestReviewCommentParser(r) {
   if (comment.author_association) {
     o.pull_review_comment_author_association = comment.author_association;
   }
-  o.pull_review_comment_body = comment.body;
+  o.body = comment.body;
   o.pull_review_comment_created_at = formatDateTime(comment.created_at);
   o.pull_review_comment_updated_at = formatDateTime(comment.updated_at);
   return o;
@@ -294,7 +289,7 @@ function commitCommentParser(r) {
   if (comment.author_association) {
     o.commit_comment_author_association = comment.author_association;
   }
-  o.commit_comment_body = comment.body ?? '';
+  o.body = comment.body ?? '';
   if (comment.path) {
     o.commit_comment_path = comment.path;
   }

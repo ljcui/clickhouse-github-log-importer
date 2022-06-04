@@ -26,14 +26,13 @@ export const FieldMap = new Map<string, string>([
   ['org_id', 'UInt64'],
   ['org_login', 'LowCardinality(String)'],
   ['created_at', 'DateTime'],
-  ['created_date', 'Date'],
   // IssuesEvent_opened
   // IssuesEvent_reopened
   // IssuesEvent_closed
   ['issue_id', 'UInt64'],
   ['issue_number', 'UInt32'],
   ['issue_title', 'String'],
-  ['issue_body', 'String'],
+  ['body', 'String'],
   ['issue_labels', `Nested
   (
     name String,
@@ -52,15 +51,14 @@ export const FieldMap = new Map<string, string>([
     login LowCardinality(String),
     id UInt64
   )`],
-  ['issue_created_at', 'DateTime'],
-  ['issue_updated_at', 'DateTime'],
+  ['issue_created_at', 'Nullable(DateTime)'],
+  ['issue_updated_at', 'Nullable(DateTime)'],
   ['issue_comments', 'UInt16'],
-  ['issue_closed_at', 'DateTime'],
+  ['issue_closed_at', 'Nullable(DateTime)'],
   // IssueCommentEvent_created
   ['issue_comment_id', 'UInt64'],
-  ['issue_comment_body', 'String'],
-  ['issue_comment_created_at', 'DateTime'],
-  ['issue_comment_updated_at', 'DateTime'],
+  ['issue_comment_created_at', 'Nullable(DateTime)'],
+  ['issue_comment_updated_at', 'Nullable(DateTime)'],
   ['issue_comment_author_association', associationType],
   ['issue_comment_author_id', 'UInt64'],
   ['issue_comment_author_login', 'LowCardinality(String)'],
@@ -74,7 +72,7 @@ export const FieldMap = new Map<string, string>([
   ['pull_changed_files', 'UInt32'],
   ['pull_merged', 'UInt8'],
   ['pull_merge_commit_sha', 'String'],
-  ['pull_merged_at', 'DateTime'],
+  ['pull_merged_at', 'Nullable(DateTime)'],
   ['pull_merged_by_id', 'UInt64'],
   ['pull_merged_by_login', 'LowCardinality(String)'],
   ['pull_merged_by_type', userType],
@@ -95,9 +93,9 @@ export const FieldMap = new Map<string, string>([
   ['repo_has_pages', 'UInt8'],
   ['repo_license', 'String'],
   ['repo_default_branch', 'String'],
-  ['repo_created_at', 'DateTime'],
-  ['repo_updated_at', 'DateTime'],
-  ['repo_pushed_at', 'DateTime'],
+  ['repo_created_at', 'Nullable(DateTime)'],
+  ['repo_updated_at', 'Nullable(DateTime)'],
+  ['repo_pushed_at', 'Nullable(DateTime)'],
   // PullRequestReviewCommentEvent_created
   ['pull_review_id', 'UInt64'],
   ['pull_review_comment_id', 'UInt64'],
@@ -107,9 +105,8 @@ export const FieldMap = new Map<string, string>([
   ['pull_review_comment_author_login', 'LowCardinality(String)'],
   ['pull_review_comment_author_type', userType],
   ['pull_review_comment_author_association', associationType],
-  ['pull_review_comment_body', 'String'],
-  ['pull_review_comment_created_at', 'DateTime'],
-  ['pull_review_comment_updated_at', 'DateTime'],
+  ['pull_review_comment_created_at', 'Nullable(DateTime)'],
+  ['pull_review_comment_updated_at', 'Nullable(DateTime)'],
   // PushEvent
   ['push_id', 'UInt64'],
   ['push_size', 'UInt32'],
@@ -162,8 +159,8 @@ export const FieldMap = new Map<string, string>([
   ['release_author_login', 'LowCardinality(String)'],
   ['release_author_type', userType],
   ['release_prerelease', 'UInt8'],
-  ['release_created_at', 'DateTime'],
-  ['release_published_at', 'DateTime'],
+  ['release_created_at', 'Nullable(DateTime)'],
+  ['release_published_at', 'Nullable(DateTime)'],
   ['release_body', 'String'],
   ['release_assets', `Nested
   (
@@ -181,10 +178,9 @@ export const FieldMap = new Map<string, string>([
   ['commit_comment_author_login', 'LowCardinality(String)'],
   ['commit_comment_author_type', userType],
   ['commit_comment_author_association', associationType],
-  ['commit_comment_body', 'String'],
   ['commit_comment_path', 'String'],
   ['commit_comment_position', 'String'],
   ['commit_comment_line', 'String'],
-  ['commit_comment_created_at', 'DateTime'],
-  ['commit_comment_updated_at', 'DateTime'],
+  ['commit_comment_created_at', 'Nullable(DateTime)'],
+  ['commit_comment_updated_at', 'Nullable(DateTime)'],
 ]);
