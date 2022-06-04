@@ -113,7 +113,6 @@ export const FieldMap = new Map<string, string>([
   ['push_distinct_size', 'UInt32'],
   ['push_ref', 'String'],
   ['push_head', 'String'],
-  ['push_before', 'String'],
   ['push_commits', `Nested
   (
     name LowCardinality(String),

@@ -174,7 +174,6 @@ function pushParser(r) {
   o.push_distinct_size = r.payload.distinct_size;
   o.push_ref = r.payload.ref;
   o.push_head = r.payload.head;
-  o.push_before = r.payload.before;
   if (!Array.isArray(r.payload.commits)) {
     r.payload.commits = [];
   }
