@@ -83,9 +83,7 @@ export default class LogImporter extends Service {
 ${getTableSchema(FieldMap)}
 ) ENGINE = ReplacingMergeTree(id)
 ORDER BY (type, repo_name, created_at)
-PARTITION BY toYYYYMM(created_at)
-PRIMARY KEY id
-SAMPLE BY id;`);
+PARTITION BY toYYYYMM(created_at);`);
     for (const q of initQuerys) {
       await this.ctx.service.clickhouse.query(q);
     }
