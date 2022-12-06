@@ -21,3 +21,5 @@ app/**/*.map
 test/**/*.map
 config/**/*.map
 status.json
+
+typings
