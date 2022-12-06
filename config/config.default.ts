@@ -49,14 +49,12 @@ export default (appInfo: EggAppInfo) => {
   config.clickhouse = {
     serverConfig: {
       host: process.env.CLICKHOUSE_SERVER || 'clickhouse',
-      protocol: 'http:',
-      port: 8123,
-      format: 'JSON',
-      user: process.env.CLICKHOUSE_USER || 'USER',
+      username: process.env.CLICKHOUSE_USERNAME || 'USERNAME',
       password: process.env.CLICKHOUSE_PASSWORD || 'PASSWORD',
+      database: 'opensource',
+      application: 'x-lab-data-importer',
     },
-    db: 'github_log',
-    table: 'events',
+    table: 'gh_events',
   };
 
   // the return config will combines to EggAppConfig

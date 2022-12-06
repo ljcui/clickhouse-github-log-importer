@@ -4,7 +4,8 @@ const { existsSync, createReadStream } = require('fs');
 const ParseFuncMap = require('./parser');
 const { createGunzip } = require('zlib');
 const { createInterface } = require('readline');
-const ClickHouse = require('@apla/clickhouse');
+const { createClient } = require('@clickhouse/client');
+const { Readable } = require('stream');
 
 async function insertRecords(filePath, dbConfig) {
   return new Promise(async resolve => {
@@ -23,35 +24,29 @@ async function insertRecords(filePath, dbConfig) {
         crlfDelay: Infinity,
       });
 
-      // open database stream
-      const client = new ClickHouse(dbConfig.serverConfig);
-      const stream = client.query(`INSERT INTO ${dbConfig.db}.${dbConfig.table}`, { format: 'JSONEachRow' }, e => {
-        if (e) {
-          console.error(filePath, e.message);
-          return resolve(false);
-        }
-        resolve(true);
+      const stream = new Readable({
+        objectMode: true,
+        read: () => { /* stub */ },
       });
-      stream.on('error', e => {
-        console.error(filePath, e.message);
-        resolve(false);
-      });
-
-      // write file content into database
-      for await (const line of rl) {
+      rl.on('line', line => {
         try {
           const item = JSON.parse(line);
           const row = ParseFuncMap.get(item.type)?.call(undefined, item);
-          if (row) {
-            stream.write(row);
-          }
+          if (row) { stream.push(row); }
         } catch {
           console.log(`Error on parse record, line=${line}`);
         }
-      }
-
-      stream.end();
-
+      });
+      rl.on('close', () => { stream.push(null); });
+      // open database stream
+      const client = createClient(dbConfig.serverConfig);
+      await client.insert({
+        table: dbConfig.table,
+        values: stream,
+        format: 'JSONEachRow',
+      });
+      await client.close();
+      resolve(true);
     } catch (e) {
       console.error(e);
       resolve(false);

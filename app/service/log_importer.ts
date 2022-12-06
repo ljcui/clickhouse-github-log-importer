@@ -74,11 +74,10 @@ export default class LogImporter extends Service {
       return ret.substring(0, ret.length - 2) + EOL;
     };
     const initQuerys: string[] = [];
-    initQuerys.push(`CREATE DATABASE IF NOT EXISTS ${dbConfig.db}`);
     if (forceInit) {
-      initQuerys.push(`DROP TABLE IF EXISTS ${dbConfig.db}.${dbConfig.table}`);
+      initQuerys.push(`DROP TABLE IF EXISTS ${dbConfig.table}`);
     }
-    initQuerys.push(`CREATE TABLE IF NOT EXISTS ${dbConfig.db}.${dbConfig.table}
+    initQuerys.push(`CREATE TABLE IF NOT EXISTS ${dbConfig.table}
 (
 ${getTableSchema(FieldMap)}
 ) ENGINE = ReplacingMergeTree(id)

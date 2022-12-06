@@ -23,7 +23,7 @@
     "clean": "ets clean"
   },
   "dependencies": {
-    "@apla/clickhouse": "^1.6.3",
+    "@clickhouse/client": "0.0.10",
     "dateformat": "^3.0.3",
     "egg": "^2.6.1",
     "egg-scripts": "^2.6.0",
