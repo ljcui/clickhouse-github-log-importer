@@ -53,7 +53,7 @@ export default class LogDownloader extends Service {
         }
       } catch (e) {
         // may timeout
-        if (isTimeoutError(e)) {
+        if (isTimeoutError(e as any)) {
           timeoutCount++;
           this.logger.info(`Time out for ${param.url}`);
           // if timeout, the file can't be intact, clean up

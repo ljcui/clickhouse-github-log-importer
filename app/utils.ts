@@ -1,6 +1,6 @@
 /* eslint-disable array-bracket-spacing */
 export async function waitFor(mill: number) {
-  return new Promise(resolve => {
+  return new Promise<void>(resolve => {
     setTimeout(() => {
       resolve();
     }, mill);
