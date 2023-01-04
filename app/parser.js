@@ -140,6 +140,18 @@ function pullRequestParser(r) {
   return o;
 }
 
+function pullRequestReviewParser(r) {
+  const o = pullRequestParser(r);
+  const review = r.payload.review;
+  o.body = review.body ?? undefined;
+  if (review.id > 0) {
+    o.pull_review_id = review.id;
+  }
+  o.pull_review_state = review.state;
+  o.pull_review_author_association = review.author_association;
+  return o;
+}
+
 function pullRequestReviewCommentParser(r) {
   const o = pullRequestParser(r);
   const comment = r.payload.comment;
@@ -307,6 +319,7 @@ module.exports = new Map([
   ['IssuesEvent', issuesParser],
   ['IssueCommentEvent', issueCommentParser],
   ['PullRequestEvent', pullRequestParser],
+  ['PullRequestReviewEvent', pullRequestReviewParser],
   ['PullRequestReviewCommentEvent', pullRequestReviewCommentParser],
   ['PushEvent', pushParser],
   ['ForkEvent', forkParser],

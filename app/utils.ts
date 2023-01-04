@@ -9,6 +9,7 @@ export async function waitFor(mill: number) {
 
 const userType = "Enum('Bot' = 1, 'Mannequin' = 2, 'Organization' = 3, 'User' = 4)";
 const associationType = "Enum('COLLABORATOR' = 1, 'CONTRIBUTOR' = 2, 'MEMBER' = 3, 'NONE' = 4, 'OWNER' = 5, 'MANNEQUIN' = 6)";
+const reviewStateType = "Enum('approved' = 1, 'commented' = 2, 'dismissed' = 3, 'changes_requested' = 4)";
 
 export const FieldMap = new Map<string, string>([
   // common
@@ -96,6 +97,9 @@ export const FieldMap = new Map<string, string>([
   ['repo_created_at', 'Nullable(DateTime)'],
   ['repo_updated_at', 'Nullable(DateTime)'],
   ['repo_pushed_at', 'Nullable(DateTime)'],
+  // PullRequestReviewEvent_created
+  ['pull_review_state', reviewStateType],
+  ['pull_review_author_association', associationType],
   // PullRequestReviewCommentEvent_created
   ['pull_review_id', 'UInt64'],
   ['pull_review_comment_id', 'UInt64'],
