@@ -30,6 +30,7 @@
     "mkdirp": "^1.0.4",
     "node-worker-threads-pool": "^1.4.0",
     "request": "^2.88.2",
+    "requestretry": "^7.1.0",
     "wget": "0.0.1"
   },
   "devDependencies": {

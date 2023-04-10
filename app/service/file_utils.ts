@@ -1,9 +1,16 @@
 import { Service } from 'egg';
 import { join } from 'path';
-import { existsSync, readFileSync, writeFileSync, unlinkSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync, unlinkSync, createReadStream } from 'fs';
 import { FileStatus } from '../types';
+import { createInterface } from 'readline';
+import { createGunzip } from 'zlib';
 
 export default class FileUtils extends Service {
+
+  private getMetaFilePath(): string {
+    const config = this.config.fileProcessor;
+    return join(config.baseDir, `${config.usingTugraph ? 'tugraph_' : ''}${config.metaFilePath}`);
+  }
 
   public tryLock(): boolean {
     const config = this.config.fileProcessor;
@@ -26,8 +33,7 @@ export default class FileUtils extends Service {
   }
 
   public getMetaData(): any {
-    const config = this.config.fileProcessor;
-    const metaFilePath = join(config.baseDir, config.metaFilePath);
+    const metaFilePath = this.getMetaFilePath();
     if (!existsSync(metaFilePath)) {
       this.logger.info('Meta file not exist, create empty meta');
       return {};
@@ -43,8 +49,7 @@ export default class FileUtils extends Service {
   }
 
   public writeMetaData(meta: any) {
-    const config = this.config.fileProcessor;
-    const metaFilePath = join(config.baseDir, config.metaFilePath);
+    const metaFilePath = this.getMetaFilePath();
     writeFileSync(metaFilePath, JSON.stringify(meta));
   }
 
@@ -108,5 +113,49 @@ export default class FileUtils extends Service {
     }
 
     return ret;
+  }
+
+  public async readline(filePath: string, onLine: (line: string, index: number) => Promise<void>): Promise<void> {
+    return new Promise(async resolve => {
+      if (!existsSync(filePath)) {
+        resolve();
+      }
+      const fileStream = createReadStream(filePath);
+
+      const rl = createInterface({
+        input: fileStream,
+        crlfDelay: Infinity,
+      });
+
+      let lineCount = 0;
+      for await (const line of rl) {
+        lineCount++;
+        await onLine(line, lineCount);
+      }
+
+      resolve();
+    });
+  }
+
+  public async readlineUnzip(filePath: string, onLine: (line: string, index: number) => Promise<void>): Promise<void> {
+    return new Promise(async resolve => {
+      if (!existsSync(filePath)) {
+        resolve();
+      }
+      const fileStream = createReadStream(filePath).pipe(createGunzip());
+
+      const rl = createInterface({
+        input: fileStream,
+        crlfDelay: Infinity,
+      });
+
+      let lineCount = 0;
+      for await (const line of rl) {
+        lineCount++;
+        await onLine(line, lineCount);
+      }
+
+      resolve();
+    });
   }
 }

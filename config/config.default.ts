@@ -35,11 +35,12 @@ export default (appInfo: EggAppInfo) => {
     baseUrl: 'https://data.gharchive.org/',
     // for checker
     checkerNum: 3,
-    checkerMaxMemoryMb: 1024,
+    checkerMaxMemoryMb: 2048,
     // for importer
     workerNum: 3,
-    workerMaxMemoryMb: 1024,
+    workerMaxMemoryMb: 2048,
     metaFilePath: 'meta.json',
+    usingTugraph: false,
     lockFilePath: '.lock',
     startTime: new Date('2015-01-01'),
     getEndTime: () => new Date(),
@@ -48,13 +49,20 @@ export default (appInfo: EggAppInfo) => {
 
   config.clickhouse = {
     serverConfig: {
-      host: process.env.CLICKHOUSE_SERVER || 'clickhouse',
+      host: process.env.CLICKHOUSE_SERVER || '127.0.0.1',
       username: process.env.CLICKHOUSE_USERNAME || 'USERNAME',
       password: process.env.CLICKHOUSE_PASSWORD || 'PASSWORD',
       database: 'opensource',
       application: 'x-lab-data-importer',
     },
     table: 'gh_events',
+  };
+
+  config.tugraph = {
+    url: '127.0.0.1:7070',
+    user: 'user',
+    pass: 'pass',
+    graph: 'default',
   };
 
   // the return config will combines to EggAppConfig
