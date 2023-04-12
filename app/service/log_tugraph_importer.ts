@@ -72,7 +72,7 @@ export default class LogTugraphImporter extends Service {
     edgeTypes.forEach(t => this.edgeMap.set(t, new Map<string, Map<number, EdgeItem>>()));
   }
 
-  private updateNode(type: NodeType, id: number, data: any, createdAt: Date) {
+  private updateNode(type: NodeType, id: any, data: any, createdAt: Date) {
     const dataMap = this.nodeMap.get(type)!;
     if (dataMap.has(id)) {
       const item = dataMap.get(id)!;
@@ -88,7 +88,7 @@ export default class LogTugraphImporter extends Service {
     }
   }
 
-  private updateEdge(type: EdgeType, from: number, to: number, id: number, data: any, createdAt: Date) {
+  private updateEdge(type: EdgeType, from: any, to: any, id: number, data: any, createdAt: Date) {
     const key = `${from}_${to}`;
     const dataMap = this.edgeMap.get(type)!;
     if (!dataMap.has(key)) {
@@ -129,6 +129,12 @@ export default class LogTugraphImporter extends Service {
     }
 
     const created_at = this.formatDateTime(createdAt);
+    const getTuGraphIssueId = (): string => {
+      const issue = r.payload.issue ?? r.payload.pull_request;
+      const number = parseInt(issue.number);
+      return `${repoId}_${number}`;
+    };
+
     const parseIssue = () => {
       let issue = r.payload.issue;
       let isPull = false;
@@ -149,36 +155,36 @@ export default class LogTugraphImporter extends Service {
       issue.labels.forEach(l => {
         const label = l.name;
         this.updateNode('issue_label', label, {}, createdAt);
-        this.updateEdge('has_issue_label', id, label, -1, {}, createdAt);
+        this.updateEdge('has_issue_label', getTuGraphIssueId(), label, -1, {}, createdAt);
       });
       if (issue.assignee) {
         const assigneeId = parseInt(issue.assignee.id);
         const assigneeLogin = issue.assignee.login;
         this.updateNode('github_actor', assigneeId, { login: assigneeLogin }, createdAt);
-        this.updateEdge('has_assignee', id, assigneeId, -1, {}, createdAt);
+        this.updateEdge('has_assignee', getTuGraphIssueId(), assigneeId, -1, {}, createdAt);
       }
       if (!Array.isArray(issue.assignees)) issue.assignees = [];
       issue.assignees.forEach(a => {
         const assigneeId = parseInt(a.id);
         const assigneeLogin = a.login;
         this.updateNode('github_actor', assigneeId, { login: assigneeLogin }, createdAt);
-        this.updateEdge('has_assignee', id, assigneeId, -1, {}, createdAt);
+        this.updateEdge('has_assignee', getTuGraphIssueId(), assigneeId, -1, {}, createdAt);
       });
       this.updateEdge('has_issue_change_request', repoId, id, -1, {}, createdAt);
 
       if (action === 'opened') {
-        this.updateEdge('open', actorId, id, eventId, { id, created_at }, createdAt);
+        this.updateEdge('open', actorId, getTuGraphIssueId(), eventId, { id, created_at }, createdAt);
       } else if (action === 'closed') {
-        this.updateEdge('close', actorId, id, eventId, { id, created_at }, createdAt);
+        this.updateEdge('close', actorId, getTuGraphIssueId(), eventId, { id, created_at }, createdAt);
       }
       return issue;
     };
 
     const parseIssueComment = () => {
-      const issue = parseIssue();
+      parseIssue();
       const id = r.payload.comment.id;
       const body = r.payload.comment.body;
-      this.updateEdge('comment', actorId, parseInt(issue.id), id, { id, body, created_at }, createdAt);
+      this.updateEdge('comment', actorId, getTuGraphIssueId(), id, { id, body, created_at }, createdAt);
     };
 
     const parsePullRequest = () => {
@@ -188,16 +194,20 @@ export default class LogTugraphImporter extends Service {
       const additions = parseInt(pull.additions ?? 0);
       const deletions = parseInt(pull.deletions ?? 0);
       const changed_files = parseInt(pull.changed_files ?? 0);
-      if (action === 'closed' && pull.merged) {
-        this.updateEdge('close', actorId, id, eventId, { id, merged: true, created_at }, createdAt);
+      if (action === 'closed') {
+        if (pull.merged) {
+          this.updateEdge('close', actorId, getTuGraphIssueId(), eventId, { id, merged: true, created_at }, createdAt);
+        } else {
+          this.updateEdge('close', actorId, getTuGraphIssueId(), eventId, { id, merged: false, created_at }, createdAt);
+        }
       }
-      this.updateNode('github_change_request', id, { commits, additions, deletions, changed_files }, createdAt);
+      this.updateNode('github_change_request', getTuGraphIssueId(), { commits, additions, deletions, changed_files }, createdAt);
       if (!Array.isArray(pull.requested_reviewers)) pull.requested_reviewers = [];
       pull.requested_reviewers.forEach(r => {
         const reviewerId = parseInt(r.id);
         const reviewerLogin = r.login;
         this.updateNode('github_actor', reviewerId, { login: reviewerLogin }, createdAt);
-        this.updateEdge('has_requested_reviewer', id, reviewerId, -1, {}, createdAt);
+        this.updateEdge('has_requested_reviewer', getTuGraphIssueId(), reviewerId, -1, {}, createdAt);
       });
       const repo = pull.base.repo;
       if (repo.language) {
@@ -219,26 +229,26 @@ export default class LogTugraphImporter extends Service {
         if (r[f]) this.updateNode('github_repo', repoId, { [f]: this.formatDateTime(new Date(repo[f])) }, createdAt);
       });
       if (this.check(pull.base?.ref, pull.base?.sha)) {
-        this.updateNode('github_change_request', id, { ref: pull.base.ref, sha: pull.base.sha }, createdAt);
+        this.updateNode('github_change_request', getTuGraphIssueId(), { ref: pull.base.ref, sha: pull.base.sha }, createdAt);
       }
       if (this.check(pull.head?.ref, pull.head?.sha, pull.head?.repo)) {
         this.updateNode('github_repo', pull.head.repo.id, { name: pull.head.repo.name }, createdAt);
-        this.updateEdge('change_request_from', id, pull.head.repo.id, -1, { ref: pull.head.ref, sha: pull.head.sha }, createdAt);
+        this.updateEdge('change_request_from', getTuGraphIssueId(), pull.head.repo.id, -1, { ref: pull.head.ref, sha: pull.head.sha }, createdAt);
       }
       return pull;
     };
 
     const parsePullRequestReview = () => {
-      const pull = parsePullRequest();
+      parsePullRequest();
       const review = r.payload.review;
       const body = review.body ?? '';
       const state = review.state ?? '';
       const id = review.id ?? 0;
-      this.updateEdge('review', actorId, parseInt(pull.id), id, { id, body, state, created_at: createdAt }, createdAt);
+      this.updateEdge('review', actorId, getTuGraphIssueId(), id, { id, body, state, created_at: createdAt }, createdAt);
     };
 
     const parsePullRequestReviewComment = () => {
-      const pull = parsePullRequest();
+      parsePullRequest();
       const comment = r.payload.comment;
       const id = comment.id;
       const body = comment.body;
@@ -246,7 +256,7 @@ export default class LogTugraphImporter extends Service {
       const position = comment.position ?? 0;
       const line = comment.line ?? 0;
       const startLine = comment.start_line ?? 0;
-      this.updateEdge('review_comment', actorId, parseInt(pull.id), id, { id, body, path, position, line, start_line: startLine, created_at }, createdAt);
+      this.updateEdge('review_comment', actorId, getTuGraphIssueId(), id, { id, body, path, position, line, start_line: startLine, created_at }, createdAt);
     };
 
     const parseStar = () => {
