@@ -157,7 +157,7 @@ export default class LogTugraphImporter extends Service {
       const number = parseInt(issue.number);
       const title = issue.title;
       const body = issue.body ?? '';
-      this.updateNode(isPull ? 'github_change_request' : 'github_issue', id, { id, number, title, body }, createdAt);
+      this.updateNode(isPull ? 'github_change_request' : 'github_issue', getTuGraphIssueId(), { id: getTuGraphIssueId(), number, title, body }, createdAt);
       if (!Array.isArray(issue.labels)) issue.labels = [];
       issue.labels.forEach(l => {
         const label = l.name;
@@ -177,7 +177,7 @@ export default class LogTugraphImporter extends Service {
         this.updateNode('github_actor', assigneeId, { login: assigneeLogin }, createdAt);
         this.updateEdge('has_assignee', getTuGraphIssueId(), assigneeId, -1, {}, createdAt);
       });
-      this.updateEdge('has_issue_change_request', repoId, id, -1, {}, createdAt);
+      this.updateEdge('has_issue_change_request', repoId, getTuGraphIssueId(), -1, {}, createdAt);
 
       if (action === 'opened') {
         this.updateEdge('open', actorId, getTuGraphIssueId(), eventId, { id, created_at }, createdAt);
@@ -208,7 +208,7 @@ export default class LogTugraphImporter extends Service {
           this.updateEdge('close', actorId, getTuGraphIssueId(), eventId, { id, merged: false, created_at }, createdAt);
         }
       }
-      this.updateNode('github_change_request', getTuGraphIssueId(), { commits, additions, deletions, changed_files }, createdAt);
+      this.updateNode('github_change_request', getTuGraphIssueId(), { id: getTuGraphIssueId(), commits, additions, deletions, changed_files }, createdAt);
       if (!Array.isArray(pull.requested_reviewers)) pull.requested_reviewers = [];
       pull.requested_reviewers.forEach(r => {
         const reviewerId = parseInt(r.id);
