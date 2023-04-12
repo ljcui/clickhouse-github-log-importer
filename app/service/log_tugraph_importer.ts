@@ -76,7 +76,7 @@ export default class LogTugraphImporter extends Service {
     const dataMap = this.nodeMap.get(type)!;
     if (dataMap.has(id)) {
       const item = dataMap.get(id)!;
-      if (item.createdAt.getTime() < createdAt.getTime()) {
+      if (item.createdAt.getTime() <= createdAt.getTime()) {
         item.data = {
           ...item.data,
           ...data,
