@@ -153,7 +153,6 @@ export default class LogTugraphImporter extends Service {
         this.logger.info(`Issue not found ${r.payload}`);
         return;
       }
-      const id = parseInt(issue.id);
       const number = parseInt(issue.number);
       const title = issue.title;
       const body = issue.body ?? '';
@@ -196,7 +195,6 @@ export default class LogTugraphImporter extends Service {
 
     const parsePullRequest = () => {
       const pull = parseIssue();
-      const id = parseInt(pull.id);
       const commits = parseInt(pull.commits ?? 0);
       const additions = parseInt(pull.additions ?? 0);
       const deletions = parseInt(pull.deletions ?? 0);
