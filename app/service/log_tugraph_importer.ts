@@ -318,6 +318,7 @@ export default class LogTugraphImporter extends Service {
   }
 
   private async insertEdges() {
+    const processArr: any[] = [];
     for (const type of edgeTypes) {
       const edges: any[] = [];
       const map = this.edgeMap.get(type)!;
@@ -336,16 +337,17 @@ export default class LogTugraphImporter extends Service {
       if (edges.length === 0) continue;
       const edgesArr = this.splitArr(edges);
       for (const e of edgesArr) {
-        await this.service.tugraph.callPlugin('cpp', 'update_edges', {
+        processArr.push(this.service.tugraph.callPlugin('cpp', 'update_edges', {
           fromKey,
           fromLabel,
           toKey,
           toLabel,
           label: type,
           edges: e,
-        });
+        }));
       }
     }
+    await Promise.all(processArr);
   }
 
   private check(...params: any[]): boolean {
