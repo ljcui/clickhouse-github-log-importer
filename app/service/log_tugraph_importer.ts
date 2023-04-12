@@ -180,9 +180,9 @@ export default class LogTugraphImporter extends Service {
       this.updateEdge('has_issue_change_request', repoId, getTuGraphIssueId(), -1, {}, createdAt);
 
       if (action === 'opened') {
-        this.updateEdge('open', actorId, getTuGraphIssueId(), eventId, { id, created_at }, createdAt);
+        this.updateEdge('open', actorId, getTuGraphIssueId(), eventId, { id: eventId, created_at }, createdAt);
       } else if (action === 'closed') {
-        this.updateEdge('close', actorId, getTuGraphIssueId(), eventId, { id, created_at }, createdAt);
+        this.updateEdge('close', actorId, getTuGraphIssueId(), eventId, { id: eventId, created_at }, createdAt);
       }
       return issue;
     };
@@ -203,9 +203,9 @@ export default class LogTugraphImporter extends Service {
       const changed_files = parseInt(pull.changed_files ?? 0);
       if (action === 'closed') {
         if (pull.merged) {
-          this.updateEdge('close', actorId, getTuGraphIssueId(), eventId, { id, merged: true, created_at }, createdAt);
+          this.updateEdge('close', actorId, getTuGraphIssueId(), eventId, { id: eventId, merged: true, created_at }, createdAt);
         } else {
-          this.updateEdge('close', actorId, getTuGraphIssueId(), eventId, { id, merged: false, created_at }, createdAt);
+          this.updateEdge('close', actorId, getTuGraphIssueId(), eventId, { id: eventId, merged: false, created_at }, createdAt);
         }
       }
       this.updateNode('github_change_request', getTuGraphIssueId(), { id: getTuGraphIssueId(), commits, additions, deletions, changed_files }, createdAt);
