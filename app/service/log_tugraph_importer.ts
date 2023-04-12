@@ -1,5 +1,6 @@
 /* eslint-disable array-bracket-spacing */
 import { Service } from 'egg';
+import { waitUntil } from '../utils';
 
 interface EntityItem {
   createdAt: Date;
@@ -52,6 +53,7 @@ export default class LogTugraphImporter extends Service {
 
   private nodeMap = new Map<NodeType, Map<number, EntityItem>>();
   private edgeMap = new Map<EdgeType, Map<string, Map<number, EdgeItem>>>();
+  private isExporting = false;
 
   public async import(filePath: string): Promise<boolean> {
     this.logger.info(`Ready to prepare data for ${filePath}.`);
@@ -60,8 +62,13 @@ export default class LogTugraphImporter extends Service {
       this.parse(line);
     });
     this.logger.info('Ready to insert data into database.');
-    await this.insertNodes();
-    await this.insertEdges();
+    await waitUntil(() => !this.isExporting, 10);
+    (async () => {
+      this.isExporting = true;
+      await this.insertNodes();
+      await this.insertEdges();
+      this.isExporting = false;
+    })();
     return true;
   }
 
