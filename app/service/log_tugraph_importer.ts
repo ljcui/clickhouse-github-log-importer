@@ -1,5 +1,6 @@
 /* eslint-disable array-bracket-spacing */
 import { Service } from 'egg';
+import { waitUntil } from '../utils';
 
 interface EntityItem {
   createdAt: Date;
@@ -50,8 +51,11 @@ const edgeTypePair = new Map<EdgeType, string[]>([
 
 export default class LogTugraphImporter extends Service {
 
-  private nodeMap = new Map<NodeType, Map<number, EntityItem>>();
-  private edgeMap = new Map<EdgeType, Map<string, Map<number, EdgeItem>>>();
+  private nodeMap: Map<NodeType, Map<number, EntityItem>>;
+  private edgeMap: Map<EdgeType, Map<string, Map<number, EdgeItem>>>;
+  private exportNodeMap: Map<NodeType, Map<number, EntityItem>>;
+  private exportEdgeMap: Map<EdgeType, Map<string, Map<number, EdgeItem>>>;
+  private isExporting = false;
 
   public async import(filePath: string): Promise<boolean> {
     this.logger.info(`Ready to prepare data for ${filePath}.`);
@@ -60,14 +64,23 @@ export default class LogTugraphImporter extends Service {
       this.parse(line);
     });
     this.logger.info('Ready to insert data into database.');
-    await this.insertNodes();
-    await this.insertEdges();
+    // wait until last insert done
+    await waitUntil(() => !this.isExporting, 10);
+    this.isExporting = true;
+    // change node map and edge map reference to avoid next data procedure clear the data on inserting
+    this.exportNodeMap = this.nodeMap;
+    this.exportEdgeMap = this.edgeMap;
+    (async () => {
+      await this.insertNodes();
+      await this.insertEdges();
+      this.isExporting = false;
+    })();
     return true;
   }
 
   private init() {
-    this.nodeMap.clear();
-    this.edgeMap.clear();
+    this.nodeMap = new Map<NodeType, Map<number, EntityItem>>();
+    this.edgeMap = new Map<EdgeType, Map<string, Map<number, EdgeItem>>>();
     nodeTypes.forEach(t => this.nodeMap.set(t, new Map<number, EntityItem>()));
     edgeTypes.forEach(t => this.edgeMap.set(t, new Map<string, Map<number, EdgeItem>>()));
   }
@@ -304,7 +317,7 @@ export default class LogTugraphImporter extends Service {
   private async insertNodes() {
     const processArr: any[] = [];
     for (const type of nodeTypes) {
-      const map = this.nodeMap.get(type)!;
+      const map = this.exportNodeMap.get(type)!;
       const primary = nodePrimaryKey.get(type) ?? 'id';
       const nodes = Array.from(map.entries()).map(i => {
         const n: any = {
@@ -331,7 +344,7 @@ export default class LogTugraphImporter extends Service {
     const processArr: any[] = [];
     for (const type of edgeTypes) {
       const edges: any[] = [];
-      const map = this.edgeMap.get(type)!;
+      const map = this.exportEdgeMap.get(type)!;
       const [fromLabel, toLabel]: any[] = edgeTypePair.get(type)!;
       const [fromKey, toKey] = [fromLabel, toLabel].map(t => nodePrimaryKey.get(t) ?? 'id');
       for (const m of map.values()) {
