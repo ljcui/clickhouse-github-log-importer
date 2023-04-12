@@ -198,7 +198,10 @@ export default class LogTugraphImporter extends Service {
           this.updateEdge('close', actorId, getTuGraphIssueId(), eventId, { id: eventId, merged: false, created_at }, createdAt);
         }
       }
-      this.updateNode('github_change_request', getTuGraphIssueId(), { id: getTuGraphIssueId(), commits, additions, deletions, changed_files }, createdAt);
+      if ([commits, additions, deletions, changed_files].some(i => i > 0)) {
+        // these may not exists for some events
+        this.updateNode('github_change_request', getTuGraphIssueId(), { id: getTuGraphIssueId(), commits, additions, deletions, changed_files }, createdAt);
+      }
       if (!Array.isArray(pull.requested_reviewers)) pull.requested_reviewers = [];
       pull.requested_reviewers.forEach(r => {
         const reviewerId = parseInt(r.id);
@@ -229,7 +232,7 @@ export default class LogTugraphImporter extends Service {
         this.updateNode('github_change_request', getTuGraphIssueId(), { ref: pull.base.ref, sha: pull.base.sha }, createdAt);
       }
       if (this.check(pull.head?.ref, pull.head?.sha, pull.head?.repo)) {
-        this.updateNode('github_repo', pull.head.repo.id, { name: pull.head.repo.name }, createdAt);
+        this.updateNode('github_repo', pull.head.repo.id, { name: pull.head.repo.full_name }, createdAt);
         this.updateEdge('change_request_from', getTuGraphIssueId(), pull.head.repo.id, -1, { ref: pull.head.ref, sha: pull.head.sha }, createdAt);
       }
       return pull;
