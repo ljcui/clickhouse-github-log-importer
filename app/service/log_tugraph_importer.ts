@@ -28,17 +28,13 @@ interface EdgeItem {
     [key: string]: any;
   };
 }
-type EdgeType = 'has_license' | 'has_language' | 'has_repo' | 'has_fork' | 'fork' | 'star' | 'has_issue_change_request' | 'change_request_from' | 'has_issue_label' | 'open' | 'comment' | 'close' | 'has_assignee' | 'has_requested_reviewer' | 'review' | 'review_comment';
-const edgeTypes: EdgeType[] = ['has_license', 'has_language', 'has_repo', 'has_fork', 'fork', 'star', 'has_issue_change_request', 'change_request_from', 'has_issue_label', 'open', 'comment', 'close', 'has_assignee', 'has_requested_reviewer', 'review', 'review_comment'];
+type EdgeType = 'has_license' | 'has_language' | 'has_repo' | 'has_issue_change_request' | 'has_issue_label' | 'open' | 'comment' | 'close' | 'has_assignee' | 'has_requested_reviewer' | 'review' | 'review_comment';
+const edgeTypes: EdgeType[] = ['has_license', 'has_language', 'has_repo', 'has_issue_change_request', 'has_issue_label', 'open', 'comment', 'close', 'has_assignee', 'has_requested_reviewer', 'review', 'review_comment'];
 const edgeTypePair = new Map<EdgeType, string[]>([
   ['has_license', ['github_repo', 'license']],
   ['has_language', ['github_repo', 'language']],
   ['has_repo', ['github_org', 'github_repo']],
-  ['has_fork', ['github_repo', 'github_repo']],
-  ['fork', ['github_actor', 'github_repo']],
-  ['star', ['github_actor', 'github_repo']],
   ['has_issue_change_request', ['github_repo', 'github_issue|github_change_request']],
-  ['change_request_from', ['github_change_request', 'github_repo']],
   ['has_issue_label', ['github_issue|github_change_request', 'issue_label']],
   ['open', ['github_actor', 'github_issue|github_change_request']],
   ['comment', ['github_actor', 'github_issue|github_change_request']],
@@ -130,13 +126,13 @@ export default class LogTugraphImporter extends Service {
       this.logger.info(`Invalid line: ${line}`);
       return;
     }
-    this.updateNode('github_repo', repoId, { name: repoName }, createdAt);
-    this.updateNode('github_actor', actorId, { login: actorLogin }, createdAt);
+    this.updateNode('github_repo', repoId, { id: repoId, name: repoName }, createdAt);
+    this.updateNode('github_actor', actorId, { id: actorId, login: actorLogin }, createdAt);
     if (r.org) {
       const orgId = parseInt(r.org.id);
       const orgLogin = r.org.login;
       if (this.check(orgId, orgLogin)) {
-        this.updateNode('github_org', orgId, { login: orgLogin }, createdAt);
+        this.updateNode('github_org', orgId, { id: orgId, login: orgLogin }, createdAt);
         this.updateEdge('has_repo', orgId, repoId, -1, {}, createdAt);
       }
     }
@@ -162,7 +158,12 @@ export default class LogTugraphImporter extends Service {
       const number = parseInt(issue.number);
       const title = issue.title;
       const body = issue.body ?? '';
-      this.updateNode(isPull ? 'github_change_request' : 'github_issue', getTuGraphIssueId(), { id: getTuGraphIssueId(), number, title, body }, createdAt);
+      this.updateNode(isPull ? 'github_change_request' : 'github_issue', getTuGraphIssueId(), {
+        id: getTuGraphIssueId(),
+        number,
+        title,
+        body,
+      }, createdAt);
       if (!Array.isArray(issue.labels)) issue.labels = [];
       issue.labels.forEach(l => {
         const label = l.name;
@@ -172,14 +173,14 @@ export default class LogTugraphImporter extends Service {
       if (issue.assignee) {
         const assigneeId = parseInt(issue.assignee.id);
         const assigneeLogin = issue.assignee.login;
-        this.updateNode('github_actor', assigneeId, { login: assigneeLogin }, createdAt);
+        this.updateNode('github_actor', assigneeId, { id: assigneeId, login: assigneeLogin }, createdAt);
         this.updateEdge('has_assignee', getTuGraphIssueId(), assigneeId, -1, {}, createdAt);
       }
       if (!Array.isArray(issue.assignees)) issue.assignees = [];
       issue.assignees.forEach(a => {
         const assigneeId = parseInt(a.id);
         const assigneeLogin = a.login;
-        this.updateNode('github_actor', assigneeId, { login: assigneeLogin }, createdAt);
+        this.updateNode('github_actor', assigneeId, { id: assigneeId, login: assigneeLogin }, createdAt);
         this.updateEdge('has_assignee', getTuGraphIssueId(), assigneeId, -1, {}, createdAt);
       });
       this.updateEdge('has_issue_change_request', repoId, getTuGraphIssueId(), -1, {}, createdAt);
@@ -206,14 +207,28 @@ export default class LogTugraphImporter extends Service {
       const changed_files = parseInt(pull.changed_files ?? 0);
       if (action === 'closed') {
         if (pull.merged) {
-          this.updateEdge('close', actorId, getTuGraphIssueId(), eventId, { id: eventId, merged: true, created_at }, createdAt);
+          this.updateEdge('close', actorId, getTuGraphIssueId(), eventId, {
+            id: eventId,
+            merged: true,
+            created_at,
+          }, createdAt);
         } else {
-          this.updateEdge('close', actorId, getTuGraphIssueId(), eventId, { id: eventId, merged: false, created_at }, createdAt);
+          this.updateEdge('close', actorId, getTuGraphIssueId(), eventId, {
+            id: eventId,
+            merged: false,
+            created_at,
+          }, createdAt);
         }
       }
       if ([commits, additions, deletions, changed_files].some(i => i > 0)) {
         // these may not exists for some events
-        this.updateNode('github_change_request', getTuGraphIssueId(), { id: getTuGraphIssueId(), commits, additions, deletions, changed_files }, createdAt);
+        this.updateNode('github_change_request', getTuGraphIssueId(), {
+          id: getTuGraphIssueId(),
+          commits,
+          additions,
+          deletions,
+          changed_files,
+        }, createdAt);
       }
       if (!Array.isArray(pull.requested_reviewers)) pull.requested_reviewers = [];
       pull.requested_reviewers.forEach(r => {
@@ -242,11 +257,18 @@ export default class LogTugraphImporter extends Service {
         if (r[f]) this.updateNode('github_repo', repoId, { [f]: this.formatDateTime(new Date(repo[f])) }, createdAt);
       });
       if (this.check(pull.base?.ref, pull.base?.sha)) {
-        this.updateNode('github_change_request', getTuGraphIssueId(), { ref: pull.base.ref, sha: pull.base.sha }, createdAt);
+        this.updateNode('github_change_request', getTuGraphIssueId(), {
+          base_ref: pull.base.ref,
+          base_sha: pull.base.sha,
+        }, createdAt);
       }
       if (this.check(pull.head?.ref, pull.head?.sha, pull.head?.repo)) {
-        this.updateNode('github_repo', pull.head.repo.id, { name: pull.head.repo.full_name }, createdAt);
-        this.updateEdge('change_request_from', getTuGraphIssueId(), pull.head.repo.id, -1, { ref: pull.head.ref, sha: pull.head.sha }, createdAt);
+        this.updateNode('github_change_request', getTuGraphIssueId(), {
+          head_id: pull.head.repo.id,
+          head_name: pull.head.repo.full_name,
+          head_ref: pull.head.ref,
+          head_sha: pull.head.sha,
+        }, createdAt);
       }
       return pull;
     };
@@ -257,7 +279,12 @@ export default class LogTugraphImporter extends Service {
       const body = review.body ?? '';
       const state = review.state ?? '';
       const id = review.id ?? 0;
-      this.updateEdge('review', actorId, getTuGraphIssueId(), id, { id, body, state, created_at: createdAt }, createdAt);
+      this.updateEdge('review', actorId, getTuGraphIssueId(), id, {
+        id,
+        body,
+        state,
+        created_at,
+      }, createdAt);
     };
 
     const parsePullRequestReviewComment = () => {
@@ -269,26 +296,18 @@ export default class LogTugraphImporter extends Service {
       const position = comment.position ?? 0;
       const line = comment.line ?? 0;
       const startLine = comment.start_line ?? 0;
-      this.updateEdge('review_comment', actorId, getTuGraphIssueId(), id, { id, body, path, position, line, start_line: startLine, created_at }, createdAt);
-    };
-
-    const parseStar = () => {
-      this.updateEdge('star', actorId, repoId, -1, { created_at }, createdAt);
-    };
-
-    const parseFork = () => {
-      this.updateEdge('fork', actorId, repoId, eventId, { id: eventId, created_at }, createdAt);
-      const forkee = r.payload.forkee;
-      if (!this.check(forkee)) return;
-      const id = parseInt(forkee.id);
-      const name = forkee.full_name;
-      this.updateNode('github_repo', id, { name }, createdAt);
-      this.updateEdge('has_fork', repoId, id, -1, { created_at }, createdAt);
+      this.updateEdge('review_comment', actorId, getTuGraphIssueId(), id, {
+        id,
+        body,
+        path,
+        position,
+        line,
+        start_line: startLine,
+        created_at,
+      }, createdAt);
     };
 
     const parseMap = new Map<string, Function>([
-      ['WatchEvent', parseStar],
-      ['ForkEvent', parseFork],
       ['IssuesEvent', parseIssue],
       ['IssueCommentEvent', parseIssueComment],
       ['PullRequestEvent', parsePullRequest],
