@@ -54,12 +54,10 @@ export default class LogTugraphImporter extends Service {
   private isExporting = false;
 
   public async import(filePath: string): Promise<boolean> {
-    this.logger.info(`Ready to prepare data for ${filePath}.`);
     this.init();
     await this.service.fileUtils.readlineUnzip(filePath, async line => {
       this.parse(line);
     });
-    this.logger.info('Ready to insert data into database.');
     // wait until last insert done
     await waitUntil(() => !this.isExporting, 10);
     this.isExporting = true;
@@ -259,7 +257,6 @@ export default class LogTugraphImporter extends Service {
       if (this.check(pull.base?.ref, pull.base?.sha)) {
         this.updateNode('github_change_request', getTuGraphIssueId(), {
           base_ref: pull.base.ref,
-          base_sha: pull.base.sha,
         }, createdAt);
       }
       if (this.check(pull.head?.ref, pull.head?.sha, pull.head?.repo)) {
@@ -267,7 +264,6 @@ export default class LogTugraphImporter extends Service {
           head_id: pull.head.repo.id,
           head_name: pull.head.repo.full_name,
           head_ref: pull.head.ref,
-          head_sha: pull.head.sha,
         }, createdAt);
       }
       return pull;
