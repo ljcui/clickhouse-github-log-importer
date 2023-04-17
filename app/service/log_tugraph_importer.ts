@@ -40,7 +40,7 @@ const edgeTypePair = new Map<EdgeType, string[]>([
   ['comment', ['github_actor', 'github_issue|github_change_request']],
   ['close', ['github_actor', 'github_issue|github_change_request']],
   ['has_assignee', ['github_issue|github_change_request', 'github_actor']],
-  ['has_requested_reviewer', ['github_issue|github_change_request', 'github_actor']],
+  ['has_requested_reviewer', ['github_change_request', 'github_actor']],
   ['review', ['github_actor', 'github_change_request']],
   ['review_comment', ['github_actor', 'github_change_request']],
 ]);
