@@ -192,6 +192,7 @@ export default class LogTugraphImporter extends Service {
     };
 
     const parseIssueComment = () => {
+      parseIssue();
       const id = r.payload.comment.id;
       const body = r.payload.comment.body;
       this.updateEdge('comment', actorId, getTuGraphIssueId(), id, { id, body, created_at }, createdAt);
