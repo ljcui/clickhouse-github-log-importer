@@ -1,6 +1,8 @@
 /* eslint-disable array-bracket-spacing */
 import { Service } from 'egg';
+import { createInterface } from 'readline';
 import { waitUntil } from '../utils';
+import { stdin as input, stdout as output } from 'process';
 
 interface EntityItem {
   createdAt: Date;
@@ -65,8 +67,10 @@ export default class LogTugraphImporter extends Service {
     this.exportNodeMap = this.nodeMap;
     this.exportEdgeMap = this.edgeMap;
     (async () => {
+      this.logger.info(`Start to insert ${filePath}.`);
       await this.insertNodes();
       await this.insertEdges();
+      this.logger.info(`Insert ${filePath} done.`);
       this.isExporting = false;
     })();
     return true;
@@ -192,7 +196,6 @@ export default class LogTugraphImporter extends Service {
     };
 
     const parseIssueComment = () => {
-      parseIssue();
       const id = r.payload.comment.id;
       const body = r.payload.comment.body;
       this.updateEdge('comment', actorId, getTuGraphIssueId(), id, { id, body, created_at }, createdAt);
@@ -338,30 +341,33 @@ export default class LogTugraphImporter extends Service {
       const nodes = Array.from(map.entries()).map(i => {
         const n: any = {
           [primary]: i[0],
-          data: {
+          properties: {
             ...i[1].data,
           },
         };
         if (['github_actor', 'github_repo', 'github_org', 'github_issue', 'github_change_request'].includes(type)) {
-          n.data.__updated_at = this.formatDateTime(i[1].createdAt);
+          n.properties.__updated_at = this.formatDateTime(i[1].createdAt);
         }
         return n;
       });
       if (nodes.length === 0) continue;
-      const nodesArr = this.splitArr(nodes);
-      for (const nodes of nodesArr) {
-        processArr.push(this.service.tugraph.callPlugin('cpp', 'update_nodes', { type, primary, nodes }));
-      }
+      processArr.push(this.service.neo4j.runQueryWithParamBatch(`
+UNWIND $nodes AS node
+MERGE (n:${type}{${primary}:node.${primary}})
+SET n += node.properties
+`, nodes, 'nodes'));
     }
     await Promise.all(processArr);
   }
 
   private async insertEdges() {
-    const processArr: any[] = [];
     for (const type of edgeTypes) {
       const edges: any[] = [];
+      let hasId = false;
       const map = this.exportEdgeMap.get(type)!;
       const [fromLabel, toLabel]: any[] = edgeTypePair.get(type)!;
+      const fromLabels = fromLabel.split('|');
+      const toLabels = toLabel.split('|');
       const [fromKey, toKey] = [fromLabel, toLabel].map(t => nodePrimaryKey.get(t) ?? 'id');
       for (const m of map.values()) {
         for (const v of m.values()) {
@@ -371,46 +377,53 @@ export default class LogTugraphImporter extends Service {
             data: v.data ?? {},
             id: v.id ?? -1,
           });
+          if (v.id && v.id > 0) hasId = true;
         }
       }
       if (edges.length === 0) continue;
-      const edgesArr = this.splitArr(edges);
-      for (const e of edgesArr) {
-        processArr.push(this.service.tugraph.callPlugin('cpp', 'update_edges', {
-          fromKey,
-          fromLabel,
-          toKey,
-          toLabel,
-          label: type,
-          edges: e,
-        }));
-      }
+      await this.service.neo4j.runQueryWithParamBatch(`
+UNWIND $edges AS edge
+MATCH (from${fromLabels.length > 1 ? '' : `:${fromLabel}`}{${fromKey}:edge.from})
+${fromLabels.length > 1 ? `WHERE ${fromLabels.map(l => `from:${l}`).join(' OR ')}` : ''}
+WITH edge, from
+MATCH (to${toLabels.length > 1 ? '' : `:${toLabel}`}{${toKey}:edge.to})
+${toLabels.length > 1 ? `WHERE ${toLabels.map(l => `to:${l}`).join(' OR ')}` : ''}
+WITH edge, from, to
+MERGE (from)-[e:${type}${hasId ? '{id:edge.id}' : ''}]->(to)
+SET e += edge.data
+`, edges, 'edges');
     }
-    await Promise.all(processArr);
   }
 
   private check(...params: any[]): boolean {
     return params.every(p => p !== null && p !== undefined);
   }
 
-  private formatDateTime(d: Date) {
+  private formatDateTime(d: Date): string {
     return d.toISOString().replace(/T/, ' ').replace(/\..+/, '');
   }
 
-  private splitArr<T>(arr: T[], len = 50000): T[][] {
-    if (arr.length < len) return [arr];
-    let index = 0;
-    const newArr: T[][] = [];
-    while (index < arr.length) {
-      newArr.push(arr.slice(index, index += len));
-    }
-    return newArr;
-  }
-
   public async initDatabase(forceInit: boolean) {
-    if (forceInit) {
-      await this.service.tugraph.cypher('MATCH (n) DETACH DELETE n;');
-    }
+    if (!forceInit) return;
+    return new Promise<void>(resolve => {
+      const rl = createInterface({ input, output });
+      rl.question('!!!Do you want to init the neo4j database?(Yes)', async answer => {
+        if (answer !== 'Yes') return resolve();
+        // clear database and reset indexes
+        const initQuries = ['MATCH (n) DETACH DELETE n;'];
+        nodeTypes.forEach(type => {
+          initQuries.push(`CREATE CONSTRAINT ${type}_unique IF NOT EXISTS ON (r:${type}) ASSERT r.${nodePrimaryKey.get(type) ?? 'id'} IS UNIQUE;`);
+        });
+        initQuries.push('CREATE INDEX github_actor_login IF NOT EXISTS FOR (r:github_actor) ON (r.login);');
+        initQuries.push('CREATE INDEX github_org_login IF NOT EXISTS FOR (r:github_org) ON (r.login);');
+        initQuries.push('CREATE INDEX github_repo_name IF NOT EXISTS FOR (r:github_repo) ON (r.name);');
+        for (const q of initQuries) {
+          await this.service.neo4j.runQuery(q);
+        }
+        this.logger.info('Init database done.');
+        resolve();
+      });
+    });
   }
 
 }

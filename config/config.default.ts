@@ -41,6 +41,7 @@ export default (appInfo: EggAppInfo) => {
     workerMaxMemoryMb: 2048,
     metaFilePath: 'meta.json',
     usingTugraph: false,
+    usingNeo4j: false,
     lockFilePath: '.lock',
     startTime: new Date('2015-01-01'),
     getEndTime: () => new Date(),
@@ -63,6 +64,12 @@ export default (appInfo: EggAppInfo) => {
     user: 'user',
     pass: 'pass',
     graph: 'default',
+  };
+
+  config.neo4j = {
+    url: process.env.NEO4J_URL,
+    user: process.env.NEO4J_USER,
+    password: process.env.NEO4J_PASSWORD,
   };
 
   // the return config will combines to EggAppConfig

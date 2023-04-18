@@ -9,7 +9,8 @@ export default class FileUtils extends Service {
 
   private getMetaFilePath(): string {
     const config = this.config.fileProcessor;
-    return join(config.baseDir, `${config.usingTugraph ? 'tugraph_' : ''}${config.metaFilePath}`);
+    const prefix = config.usingTugraph ? 'tugraph_' : (config.usingNeo4j ? 'neo4j_' : '');
+    return join(config.baseDir, `${prefix}${config.metaFilePath}`);
   }
 
   public tryLock(): boolean {

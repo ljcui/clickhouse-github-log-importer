@@ -28,7 +28,9 @@
     "egg": "^2.6.1",
     "egg-scripts": "^2.6.0",
     "mkdirp": "^1.0.4",
+    "neo4j-driver": "^5.7.0",
     "node-worker-threads-pool": "^1.4.0",
+    "parse-neo4j": "^0.6.11",
     "request": "^2.88.2",
     "requestretry": "^7.1.0",
     "wget": "0.0.1"

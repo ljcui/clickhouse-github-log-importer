@@ -21,7 +21,23 @@ export default class LogImporter extends Service {
       this.ctx.service.fileUtils.writeMetaData(meta);
     }
 
-    if (config.usingTugraph) {
+    if (config.usingNeo4j) {
+      let importedCount = 0;
+      for (const f in meta) {
+        if (meta[f] === FileStatus.Verified) {
+          const filePath = join(config.baseDir, f);
+          const imported = await this.service.logNeo4jImporter.import(filePath);
+          if (imported) {
+            meta[f] = FileStatus.Imported;
+            this.ctx.service.fileUtils.writeMetaData(meta);
+            importedCount++;
+            if (importedCount % 1000 === 0) {
+              this.logger.info(`${importedCount} files have been imported.`);
+            }
+          }
+        }
+      }
+    } if (config.usingTugraph) {
       let importedCount = 0;
       for (const f in meta) {
         if (meta[f] === FileStatus.Verified) {
@@ -83,10 +99,10 @@ export default class LogImporter extends Service {
 
   private async init(forceInit: boolean) {
     this.logger.info('Start to init database');
-    if (this.config.fileProcessor.usingTugraph) {
-      if (forceInit) {
-        await this.service.tugraph.cypher('MATCH (n) DETACH DELETE n;');
-      }
+    if (this.config.fileProcessor.usingNeo4j) {
+      await this.service.logNeo4jImporter.initDatabase(forceInit);
+    } else if (this.config.fileProcessor.usingTugraph) {
+      await this.service.logTugraphImporter.initDatabase(forceInit);
     } else {
       const dbConfig = this.config.clickhouse;
       const getTableSchema = (map: Map<string, string>): string => {
