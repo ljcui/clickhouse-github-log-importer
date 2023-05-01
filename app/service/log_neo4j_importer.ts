@@ -424,11 +424,14 @@ SET e += edge.data
         // clear database and reset indexes
         const initQuries = ['MATCH (n) DETACH DELETE n;'];
         nodeTypes.forEach(type => {
-          initQuries.push(`CREATE CONSTRAINT ${type}_unique IF NOT EXISTS ON (r:${type}) ASSERT r.${nodePrimaryKey.get(type) ?? 'id'} IS UNIQUE;`);
+          initQuries.push(`CREATE CONSTRAINT ${type}_unique IF NOT EXISTS FOR (r:${type}) REQUIRE r.${nodePrimaryKey.get(type) ?? 'id'} IS UNIQUE;`);
         });
         initQuries.push('CREATE INDEX github_actor_login IF NOT EXISTS FOR (r:github_actor) ON (r.login);');
         initQuries.push('CREATE INDEX github_org_login IF NOT EXISTS FOR (r:github_org) ON (r.login);');
         initQuries.push('CREATE INDEX github_repo_name IF NOT EXISTS FOR (r:github_repo) ON (r.name);');
+        ['open', 'comment', 'review', 'review_comment', 'close'].forEach(t => {
+          initQuries.push(`CREATE INDEX open_created_at IF NOT EXISTS FOR (r:${t}) ON (r.created_at);`);
+        });
         for (const q of initQuries) {
           await this.service.neo4j.runQuery(q);
         }
