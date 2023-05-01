@@ -72,8 +72,16 @@ export default class LogTugraphImporter extends Service {
     this.exportEdgeMap = this.edgeMap;
     (async () => {
       this.logger.info(`Start to insert ${filePath}.`);
-      await this.insertNodes();
-      await this.insertEdges();
+      try {
+        await this.insertNodes();
+      } catch (e) {
+        //
+      }
+      try {
+        await this.insertEdges();
+      } catch (e) {
+        //
+      }
       this.logger.info(`Insert ${filePath} done.`);
       this.isExporting = false;
     })();
