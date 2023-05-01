@@ -58,7 +58,11 @@ export default class LogTugraphImporter extends Service {
   public async import(filePath: string): Promise<boolean> {
     this.init();
     await this.service.fileUtils.readlineUnzip(filePath, async line => {
-      this.parse(line);
+      try {
+        this.parse(line);
+      } catch (e) {
+        this.logger.error(`Error on parse line, e=${JSON.stringify(e)}, line=${line}`);
+      }
     });
     // wait until last insert done
     await waitUntil(() => !this.isExporting, 10);
