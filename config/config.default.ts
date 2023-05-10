@@ -30,10 +30,12 @@ export default (appInfo: EggAppInfo) => {
   config.fileProcessor = {
     baseDir: process.env.DATA_DIR || 'GHA_DATA',
     // for downloader
+    enableDownload: true,
     downloaderNum: 3,
     downloaderTimeout: 5 * 60 * 1000,
     baseUrl: 'https://data.gharchive.org/',
     // for checker
+    enableCheck: true,
     checkerNum: 3,
     checkerMaxMemoryMb: 2048,
     // for importer

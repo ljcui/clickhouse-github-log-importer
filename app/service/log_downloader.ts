@@ -9,6 +9,7 @@ export default class LogDownloader extends Service {
   public async download(meta: any) {
     // download the lost files
     const config = this.app.config.fileProcessor;
+    if (!config.enableDownload) return;
     const params: { url: string; filePath: string; key: string }[] = [];
     for (const k in meta) {
       const s = meta[k];

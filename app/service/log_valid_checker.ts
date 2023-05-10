@@ -9,6 +9,7 @@ export default class LogValidChecker extends Service {
   public async check(meta: any) {
     // check `Downloaded` file if all valid
     const config = this.config.fileProcessor;
+    if (!config.enableCheck) return;
     const params: { filePath: string; key: string }[] = [];
     for (const k in meta) {
       if (meta[k] !== FileStatus.Downloaded) {

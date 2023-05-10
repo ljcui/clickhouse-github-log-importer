@@ -433,7 +433,7 @@ SET e += edge.data${hasCreatedAt ? ', e.created_at=datetime(edge.data.created_at
         initQuries.push('CREATE INDEX github_org_login IF NOT EXISTS FOR (r:github_org) ON (r.login);');
         initQuries.push('CREATE INDEX github_repo_name IF NOT EXISTS FOR (r:github_repo) ON (r.name);');
         ['open', 'comment', 'review', 'review_comment', 'close'].forEach(t => {
-          initQuries.push(`CREATE INDEX ${t}_created_at IF NOT EXISTS FOR (r:${t}) ON (r.created_at);`);
+          initQuries.push(`CREATE INDEX ${t}_created_at IF NOT EXISTS FOR ()-[r:${t}]-() ON (r.created_at);`);
         });
         for (const q of initQuries) {
           await this.service.neo4j.runQuery(q);
