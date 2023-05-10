@@ -55,7 +55,7 @@ export default class LogTugraphImporter extends Service {
   private exportEdgeMap: Map<EdgeType, Map<string, Map<number, EdgeItem>>>;
   private isExporting = false;
 
-  public async import(filePath: string): Promise<boolean> {
+  public async import(filePath: string, onSuccess: () => void): Promise<void> {
     this.init();
     await this.service.fileUtils.readlineUnzip(filePath, async line => {
       try {
@@ -75,17 +75,13 @@ export default class LogTugraphImporter extends Service {
       try {
         await this.insertNodes();
       } catch (e) {
-        //
+        this.logger.error(`Error on insert nodes, e=${e}`);
       }
-      try {
-        await this.insertEdges();
-      } catch (e) {
-        //
-      }
+      await this.insertEdges();
       this.logger.info(`Insert ${filePath} done.`);
       this.isExporting = false;
+      onSuccess();
     })();
-    return true;
   }
 
   private init() {
@@ -376,6 +372,7 @@ SET n += node.properties
     for (const type of edgeTypes) {
       const edges: any[] = [];
       let hasId = false;
+      let hasCreatedAt = false;
       const map = this.exportEdgeMap.get(type)!;
       const [fromLabel, toLabel]: any[] = edgeTypePair.get(type)!;
       const fromLabels = fromLabel.split('|');
@@ -383,6 +380,7 @@ SET n += node.properties
       const [fromKey, toKey] = [fromLabel, toLabel].map(t => nodePrimaryKey.get(t) ?? 'id');
       for (const m of map.values()) {
         for (const v of m.values()) {
+          if (!v.from || !v.to) continue; // avoid id parse error
           edges.push({
             from: v.from,
             to: v.to,
@@ -390,10 +388,12 @@ SET n += node.properties
             id: v.id ?? -1,
           });
           if (v.id && v.id > 0) hasId = true;
+          if (v.data?.created_at) hasCreatedAt = true;
         }
       }
       if (edges.length === 0) continue;
-      await this.service.neo4j.runQueryWithParamBatch(`
+      try {
+        await this.service.neo4j.runQueryWithParamBatch(`
 UNWIND $edges AS edge
 MATCH (from${fromLabels.length > 1 ? '' : `:${fromLabel}`}{${fromKey}:edge.from})
 ${fromLabels.length > 1 ? `WHERE ${fromLabels.map(l => `from:${l}`).join(' OR ')}` : ''}
@@ -402,8 +402,11 @@ MATCH (to${toLabels.length > 1 ? '' : `:${toLabel}`}{${toKey}:edge.to})
 ${toLabels.length > 1 ? `WHERE ${toLabels.map(l => `to:${l}`).join(' OR ')}` : ''}
 WITH edge, from, to
 MERGE (from)-[e:${type}${hasId ? '{id:edge.id}' : ''}]->(to)
-SET e += edge.data
+SET e += edge.data${hasCreatedAt ? ', e.created_at=datetime(edge.data.created_at)' : ''}
 `, edges, 'edges');
+      } catch (e) {
+        this.logger.error(`Error on insert edges ${type}, e=${e}`);
+      }
     }
   }
 
@@ -412,7 +415,7 @@ SET e += edge.data
   }
 
   private formatDateTime(d: Date): string {
-    return d.toISOString().replace(/T/, ' ').replace(/\..+/, '');
+    return d.toISOString();
   }
 
   public async initDatabase(forceInit: boolean) {
@@ -430,7 +433,7 @@ SET e += edge.data
         initQuries.push('CREATE INDEX github_org_login IF NOT EXISTS FOR (r:github_org) ON (r.login);');
         initQuries.push('CREATE INDEX github_repo_name IF NOT EXISTS FOR (r:github_repo) ON (r.name);');
         ['open', 'comment', 'review', 'review_comment', 'close'].forEach(t => {
-          initQuries.push(`CREATE INDEX open_created_at IF NOT EXISTS FOR (r:${t}) ON (r.created_at);`);
+          initQuries.push(`CREATE INDEX ${t}_created_at IF NOT EXISTS FOR (r:${t}) ON (r.created_at);`);
         });
         for (const q of initQuries) {
           await this.service.neo4j.runQuery(q);

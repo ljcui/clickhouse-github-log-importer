@@ -1,3 +1,4 @@
+/* eslint-disable no-loop-func */
 /* eslint-disable array-bracket-spacing */
 import { Service } from 'egg';
 import { EOL } from 'os';
@@ -26,15 +27,14 @@ export default class LogImporter extends Service {
       for (const f in meta) {
         if (meta[f] === FileStatus.Verified) {
           const filePath = join(config.baseDir, f);
-          const imported = await this.service.logNeo4jImporter.import(filePath);
-          if (imported) {
+          await this.service.logNeo4jImporter.import(filePath, () => {
             meta[f] = FileStatus.Imported;
             this.ctx.service.fileUtils.writeMetaData(meta);
             importedCount++;
             if (importedCount % 1000 === 0) {
               this.logger.info(`${importedCount} files have been imported.`);
             }
-          }
+          });
         }
       }
     } if (config.usingTugraph) {
