@@ -196,9 +196,9 @@ export default class LogTugraphImporter extends Service {
       this.updateEdge('has_issue_change_request', repoId, getTuGraphIssueId(), -1, {}, createdAt);
 
       if (action === 'opened') {
-        this.updateEdge('open', actorId, getTuGraphIssueId(), eventId, { id: eventId, created_at }, createdAt);
+        this.updateEdge('open', actorId, getTuGraphIssueId(), eventId, { id: eventId, ...created_at }, createdAt);
       } else if (action === 'closed') {
-        this.updateEdge('close', actorId, getTuGraphIssueId(), eventId, { id: eventId, created_at }, createdAt);
+        this.updateEdge('close', actorId, getTuGraphIssueId(), eventId, { id: eventId, ...created_at }, createdAt);
       }
       return issue;
     };
@@ -206,7 +206,7 @@ export default class LogTugraphImporter extends Service {
     const parseIssueComment = () => {
       const id = r.payload.comment.id;
       const body = r.payload.comment.body;
-      this.updateEdge('comment', actorId, getTuGraphIssueId(), id, { id, body, created_at }, createdAt);
+      this.updateEdge('comment', actorId, getTuGraphIssueId(), id, { id, body, ...created_at }, createdAt);
     };
 
     const parsePullRequest = () => {
@@ -220,13 +220,13 @@ export default class LogTugraphImporter extends Service {
           this.updateEdge('close', actorId, getTuGraphIssueId(), eventId, {
             id: eventId,
             merged: true,
-            created_at,
+            ...created_at,
           }, createdAt);
         } else {
           this.updateEdge('close', actorId, getTuGraphIssueId(), eventId, {
             id: eventId,
             merged: false,
-            created_at,
+            ...created_at,
           }, createdAt);
         }
       }
@@ -291,7 +291,7 @@ export default class LogTugraphImporter extends Service {
         id,
         body,
         state,
-        created_at,
+        ...created_at,
       }, createdAt);
     };
 
@@ -311,7 +311,7 @@ export default class LogTugraphImporter extends Service {
         position,
         line,
         start_line: startLine,
-        created_at,
+        ...created_at,
       }, createdAt);
     };
 
@@ -372,7 +372,6 @@ SET n += node.properties
     for (const type of edgeTypes) {
       const edges: any[] = [];
       let hasId = false;
-      let hasCreatedAt = false;
       const map = this.exportEdgeMap.get(type)!;
       const [fromLabel, toLabel]: any[] = edgeTypePair.get(type)!;
       const fromLabels = fromLabel.split('|');
@@ -388,7 +387,6 @@ SET n += node.properties
             id: v.id ?? -1,
           });
           if (v.id && v.id > 0) hasId = true;
-          if (v.data?.created_at) hasCreatedAt = true;
         }
       }
       if (edges.length === 0) continue;
@@ -402,7 +400,7 @@ MATCH (to${toLabels.length > 1 ? '' : `:${toLabel}`}{${toKey}:edge.to})
 ${toLabels.length > 1 ? `WHERE ${toLabels.map(l => `to:${l}`).join(' OR ')}` : ''}
 WITH edge, from, to
 MERGE (from)-[e:${type}${hasId ? '{id:edge.id}' : ''}]->(to)
-SET e += edge.data${hasCreatedAt ? ', e.created_at=datetime(edge.data.created_at)' : ''}
+SET e += edge.data
 `, edges, 'edges');
       } catch (e) {
         this.logger.error(`Error on insert edges ${type}, e=${e}`);
@@ -414,8 +412,8 @@ SET e += edge.data${hasCreatedAt ? ', e.created_at=datetime(edge.data.created_at
     return params.every(p => p !== null && p !== undefined);
   }
 
-  private formatDateTime(d: Date): string {
-    return d.toISOString();
+  private formatDateTime(d: Date): any {
+    return { year: d.getFullYear(), month: d.getMonth() + 1, day: d.getDate(), hour: d.getHours() };
   }
 
   public async initDatabase(forceInit: boolean) {
@@ -433,7 +431,9 @@ SET e += edge.data${hasCreatedAt ? ', e.created_at=datetime(edge.data.created_at
         initQuries.push('CREATE INDEX github_org_login IF NOT EXISTS FOR (r:github_org) ON (r.login);');
         initQuries.push('CREATE INDEX github_repo_name IF NOT EXISTS FOR (r:github_repo) ON (r.name);');
         ['open', 'comment', 'review', 'review_comment', 'close'].forEach(t => {
-          initQuries.push(`CREATE INDEX ${t}_created_at IF NOT EXISTS FOR ()-[r:${t}]-() ON (r.created_at);`);
+          ['year', 'month', 'day', 'hour'].forEach(f => {
+            initQuries.push(`CREATE INDEX ${t}_${f} IF NOT EXISTS FOR ()-[r:${t}]-() ON (r.${f});`);
+          });
         });
         for (const q of initQuries) {
           await this.service.neo4j.runQuery(q);
