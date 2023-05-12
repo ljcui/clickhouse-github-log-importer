@@ -354,7 +354,7 @@ export default class LogTugraphImporter extends Service {
           },
         };
         if (['github_actor', 'github_repo', 'github_org', 'github_issue', 'github_change_request'].includes(type)) {
-          n.properties.__updated_at = this.formatDateTime(i[1].createdAt);
+          n.properties.__updated_at = i[1].createdAt.toISOString();
         }
         return n;
       });
