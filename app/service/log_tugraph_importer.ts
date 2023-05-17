@@ -102,7 +102,7 @@ export default class LogTugraphImporter extends Service {
       dataMap.set(key, new Map<number, EdgeItem>());
     }
     const item = dataMap.get(key)!.get(id) ?? { from, to, id, data, createdAt };
-    if (item.createdAt.getTime() < createdAt.getTime()) {
+    if (item.createdAt.getTime() <= createdAt.getTime()) {
       item.data = data;
       item.createdAt = createdAt;
     }
