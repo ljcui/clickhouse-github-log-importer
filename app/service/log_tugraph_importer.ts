@@ -56,7 +56,11 @@ export default class LogTugraphImporter extends Service {
   public async import(filePath: string): Promise<boolean> {
     this.init();
     await this.service.fileUtils.readlineUnzip(filePath, async line => {
-      this.parse(line);
+      try {
+        this.parse(line);
+      } catch (e) {
+        this.logger.error(`Error on parse line, e=${JSON.stringify(e)}, line=${line}`);
+      }
     });
     // wait until last insert done
     await waitUntil(() => !this.isExporting, 10);
@@ -65,8 +69,17 @@ export default class LogTugraphImporter extends Service {
     this.exportNodeMap = this.nodeMap;
     this.exportEdgeMap = this.edgeMap;
     (async () => {
-      await this.insertNodes();
-      await this.insertEdges();
+      try {
+        await this.insertNodes();
+      } catch (e) {
+        this.logger.error(`Error on insert nodes, e=${e}`);
+      }
+      try {
+        await this.insertEdges();
+      } catch (e) {
+        this.logger.error(`Error on insert edges, e=${e}`);
+      }
+      this.logger.info(`Insert ${filePath} done.`);
       this.isExporting = false;
     })();
     return true;
@@ -184,9 +197,9 @@ export default class LogTugraphImporter extends Service {
       this.updateEdge('has_issue_change_request', repoId, getTuGraphIssueId(), -1, {}, createdAt);
 
       if (action === 'opened') {
-        this.updateEdge('open', actorId, getTuGraphIssueId(), eventId, { id: eventId, created_at }, createdAt);
+        this.updateEdge('open', actorId, getTuGraphIssueId(), eventId, { id: eventId, ...created_at }, createdAt);
       } else if (action === 'closed') {
-        this.updateEdge('close', actorId, getTuGraphIssueId(), eventId, { id: eventId, created_at }, createdAt);
+        this.updateEdge('close', actorId, getTuGraphIssueId(), eventId, { id: eventId, ...created_at }, createdAt);
       }
       return issue;
     };
@@ -195,7 +208,7 @@ export default class LogTugraphImporter extends Service {
       parseIssue();
       const id = r.payload.comment.id;
       const body = r.payload.comment.body;
-      this.updateEdge('comment', actorId, getTuGraphIssueId(), id, { id, body, created_at }, createdAt);
+      this.updateEdge('comment', actorId, getTuGraphIssueId(), id, { id, body, ...created_at }, createdAt);
     };
 
     const parsePullRequest = () => {
@@ -209,13 +222,13 @@ export default class LogTugraphImporter extends Service {
           this.updateEdge('close', actorId, getTuGraphIssueId(), eventId, {
             id: eventId,
             merged: true,
-            created_at,
+            ...created_at,
           }, createdAt);
         } else {
           this.updateEdge('close', actorId, getTuGraphIssueId(), eventId, {
             id: eventId,
             merged: false,
-            created_at,
+            ...created_at,
           }, createdAt);
         }
       }
@@ -253,7 +266,7 @@ export default class LogTugraphImporter extends Service {
         if (r[f]) this.updateNode('github_repo', repoId, { [f]: repo[f] }, createdAt);
       });
       ['updated_at', 'created_at', 'pushed_at'].forEach(f => {
-        if (r[f]) this.updateNode('github_repo', repoId, { [f]: this.formatDateTime(new Date(repo[f])) }, createdAt);
+        if (r[f]) this.updateNode('github_repo', repoId, { [f]: this.tugraphDateTime(new Date(repo[f])) }, createdAt);
       });
       if (this.check(pull.base?.ref, pull.base?.sha)) {
         this.updateNode('github_change_request', getTuGraphIssueId(), {
@@ -280,7 +293,7 @@ export default class LogTugraphImporter extends Service {
         id,
         body,
         state,
-        created_at,
+        ...created_at,
       }, createdAt);
     };
 
@@ -300,7 +313,7 @@ export default class LogTugraphImporter extends Service {
         position,
         line,
         start_line: startLine,
-        created_at,
+        ...created_at,
       }, createdAt);
     };
 
@@ -343,7 +356,7 @@ export default class LogTugraphImporter extends Service {
           },
         };
         if (['github_actor', 'github_repo', 'github_org', 'github_issue', 'github_change_request'].includes(type)) {
-          n.data.__updated_at = this.formatDateTime(i[1].createdAt);
+          n.data.__updated_at = this.tugraphDateTime(i[1].createdAt);
         }
         return n;
       });
@@ -394,10 +407,14 @@ export default class LogTugraphImporter extends Service {
   }
 
   private formatDateTime(d: Date) {
+    return { year: d.getFullYear(), month: d.getMonth() + 1, day: d.getDate(), hour: d.getHours() };
+  }
+
+  private tugraphDateTime(d: Date) {
     return d.toISOString().replace(/T/, ' ').replace(/\..+/, '');
   }
 
-  private splitArr<T>(arr: T[], len = 50000): T[][] {
+  private splitArr<T>(arr: T[], len = 500): T[][] {
     if (arr.length < len) return [arr];
     let index = 0;
     const newArr: T[][] = [];
