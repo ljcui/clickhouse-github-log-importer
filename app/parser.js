@@ -116,8 +116,8 @@ function pullRequestParser(r) {
   }
   o.pull_base_ref = repo.ref;
   const headRepo = pull.head.repo;
-  o.pull_head_repo_id = headRepo.id;
-  o.pull_head_repo_name = headRepo.full_name;
+  o.pull_head_repo_id = headRepo?.id ?? -1;
+  o.pull_head_repo_name = headRepo?.full_name ?? '';
   o.pull_head_ref = pull.head.ref;
 
   if (repo.description) {
