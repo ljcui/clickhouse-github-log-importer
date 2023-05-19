@@ -114,6 +114,12 @@ function pullRequestParser(r) {
     o.pull_requested_reviewer_login = requestedReviewer.login;
     o.pull_requested_reviewer_type = requestedReviewer.type;
   }
+  o.pull_base_ref = repo.ref;
+  const headRepo = pull.head.repo;
+  o.pull_head_repo_id = headRepo.id;
+  o.pull_head_repo_name = headRepo.full_name;
+  o.pull_head_ref = pull.head.ref;
+
   if (repo.description) {
     o.repo_description = repo.description;
   }
@@ -310,6 +316,7 @@ function commitCommentParser(r) {
   if (comment.line) {
     o.commit_comment_line = comment.line.toString();
   }
+  o.commit_comment_sha = comment.commit_id;
   o.commit_comment_created_at = formatDateTime(comment.created_at);
   o.commit_comment_updated_at = formatDateTime(comment.updated_at);
   return o;

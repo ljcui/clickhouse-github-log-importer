@@ -87,6 +87,10 @@ export const FieldMap = new Map<string, string>([
   ['pull_requested_reviewer_login', 'LowCardinality(String)'],
   ['pull_requested_reviewer_type', userType],
   ['pull_review_comments', 'UInt16'],
+  ['pull_base_ref', 'String'],
+  ['pull_head_repo_id', 'UInt64'],
+  ['pull_head_repo_name', 'LowCardinality(String)'],
+  ['pull_head_ref', 'String'],
 
   ['repo_description', 'String'],
   ['repo_size', 'UInt32'],
@@ -190,6 +194,7 @@ export const FieldMap = new Map<string, string>([
   ['commit_comment_path', 'String'],
   ['commit_comment_position', 'String'],
   ['commit_comment_line', 'String'],
+  ['commit_comment_sha', 'String'],
   ['commit_comment_created_at', 'Nullable(DateTime)'],
   ['commit_comment_updated_at', 'Nullable(DateTime)'],
 ]);
