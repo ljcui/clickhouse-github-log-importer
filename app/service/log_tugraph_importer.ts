@@ -263,10 +263,10 @@ export default class LogTugraphImporter extends Service {
         }
       }
       ['description', 'default_branch'].forEach(f => {
-        if (r[f]) this.updateNode('github_repo', repoId, { [f]: repo[f] }, createdAt);
+        if (repo[f]) this.updateNode('github_repo', repoId, { [f]: repo[f] }, createdAt);
       });
       ['updated_at', 'created_at', 'pushed_at'].forEach(f => {
-        if (r[f]) this.updateNode('github_repo', repoId, { [f]: this.tugraphDateTime(new Date(repo[f])) }, createdAt);
+        if (repo[f]) this.updateNode('github_repo', repoId, { [f]: this.tugraphDateTime(new Date(repo[f])) }, createdAt);
       });
       if (this.check(pull.base?.ref, pull.base?.sha)) {
         this.updateNode('github_change_request', getTuGraphIssueId(), {

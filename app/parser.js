@@ -114,7 +114,7 @@ function pullRequestParser(r) {
     o.pull_requested_reviewer_login = requestedReviewer.login;
     o.pull_requested_reviewer_type = requestedReviewer.type;
   }
-  o.pull_base_ref = repo.ref;
+  o.pull_base_ref = pull.base.ref;
   const headRepo = pull.head.repo;
   o.pull_head_repo_id = headRepo?.id ?? 0;
   o.pull_head_repo_name = headRepo?.full_name ?? '';
