@@ -415,11 +415,7 @@ SET e += edge.data
 
   private formatDateTime(d: Date): any {
     return {
-      year: neo4j.int(d.getFullYear()),
-      month: neo4j.int(d.getMonth() + 1),
-      day: neo4j.int(d.getDate()),
-      hour: neo4j.int(d.getHours()),
-      yyyymm: neo4j.int(parseInt(`${d.getFullYear()}${(d.getMonth() + 1).toString().padStart(2, '0')}`)),
+      timestamp: neo4j.int(Math.round(d.getTime() / 1000)),
     };
   }
 
@@ -437,9 +433,7 @@ SET e += edge.data
         initQuries.push('CREATE INDEX github_actor_login IF NOT EXISTS FOR (r:github_actor) ON (r.login);');
         initQuries.push('CREATE INDEX github_org_login IF NOT EXISTS FOR (r:github_org) ON (r.login);');
         initQuries.push('CREATE INDEX github_repo_name IF NOT EXISTS FOR (r:github_repo) ON (r.name);');
-        ['year', 'month', 'day', 'hour', 'yyyymm'].forEach(f => {
-          initQuries.push(`CREATE INDEX action_${f} IF NOT EXISTS FOR ()-[r:action]-() ON (r.${f});`);
-        });
+        initQuries.push('CREATE INDEX action_timestamp IF NOT EXISTS FOR ()-[r:action]-() ON (r.timestamp);');
         for (const q of initQuries) {
           await this.service.neo4j.runQuery(q);
         }
