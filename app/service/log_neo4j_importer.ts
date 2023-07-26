@@ -415,7 +415,7 @@ SET e += edge.data
 
   private formatDateTime(d: Date): any {
     return {
-      timestamp: neo4j.int(Math.round(d.getTime() / 1000)),
+      timestamp: neo4j.int(d.getTime()),
     };
   }
 
