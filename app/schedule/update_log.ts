@@ -24,8 +24,8 @@ module.exports = {
       await ctx.service.logExistChecker.check(metaData);
       showStat('Check exist finished,', metaData);
       // download
-      await ctx.service.logDownloader.download(metaData);
-      showStat('Download finished', metaData);
+      // await ctx.service.logDownloader.download(metaData);
+      // showStat('Download finished', metaData);
       // check verify
       await ctx.service.logValidChecker.check(metaData);
       showStat('Check valid finished,', metaData);
