@@ -49,7 +49,7 @@ export default class LogTugraphImporter extends Service {
   private exportEdgeMap: Map<EdgeType, Map<string, Map<number, EdgeItem>>>;
   private isExporting = false;
 
-  public async import(filePath: string, onSuccess: () => void): Promise<void> {
+  public async import(filePath: string): Promise<boolean> {
     this.init();
     await this.service.fileUtils.readlineUnzip(filePath, async line => {
       try {
@@ -78,8 +78,8 @@ export default class LogTugraphImporter extends Service {
       }
       this.logger.info(`Insert ${filePath} done.`);
       this.isExporting = false;
-      onSuccess();
     })();
+    return true;
   }
 
   private init() {
