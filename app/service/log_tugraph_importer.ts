@@ -406,8 +406,10 @@ export default class LogTugraphImporter extends Service {
     return params.every(p => p !== null && p !== undefined);
   }
 
-  private formatDateTime(d: Date) {
-    return { year: d.getFullYear(), month: d.getMonth() + 1, day: d.getDate(), hour: d.getHours() };
+  private formatDateTime(d: Date): any {
+    return {
+      timestamp: d.getTime() / 1000,
+    };
   }
 
   private tugraphDateTime(d: Date) {
