@@ -28,21 +28,17 @@ interface EdgeItem {
     [key: string]: any;
   };
 }
-type EdgeType = 'has_license' | 'has_language' | 'has_repo' | 'has_issue_change_request' | 'has_issue_label' | 'open' | 'comment' | 'close' | 'has_assignee' | 'has_requested_reviewer' | 'review' | 'review_comment';
-const edgeTypes: EdgeType[] = ['has_license', 'has_language', 'has_repo', 'has_issue_change_request', 'has_issue_label', 'open', 'comment', 'close', 'has_assignee', 'has_requested_reviewer', 'review', 'review_comment'];
+type EdgeType = 'has_license' | 'has_language' | 'has_repo' | 'has_issue_change_request' | 'has_issue_label' | 'action' | 'has_assignee' | 'has_requested_reviewer';
+const edgeTypes: EdgeType[] = ['has_license', 'has_language', 'has_repo', 'has_issue_change_request', 'has_issue_label', 'action', 'has_assignee', 'has_requested_reviewer'];
 const edgeTypePair = new Map<EdgeType, string[]>([
   ['has_license', ['github_repo', 'license']],
   ['has_language', ['github_repo', 'language']],
   ['has_repo', ['github_org', 'github_repo']],
   ['has_issue_change_request', ['github_repo', 'github_issue|github_change_request']],
   ['has_issue_label', ['github_issue|github_change_request', 'issue_label']],
-  ['open', ['github_actor', 'github_issue|github_change_request']],
-  ['comment', ['github_actor', 'github_issue|github_change_request']],
-  ['close', ['github_actor', 'github_issue|github_change_request']],
+  ['action', ['github_actor', 'github_issue|github_change_request']],
   ['has_assignee', ['github_issue|github_change_request', 'github_actor']],
   ['has_requested_reviewer', ['github_change_request', 'github_actor']],
-  ['review', ['github_actor', 'github_change_request']],
-  ['review_comment', ['github_actor', 'github_change_request']],
 ]);
 
 export default class LogTugraphImporter extends Service {
@@ -53,7 +49,7 @@ export default class LogTugraphImporter extends Service {
   private exportEdgeMap: Map<EdgeType, Map<string, Map<number, EdgeItem>>>;
   private isExporting = false;
 
-  public async import(filePath: string): Promise<boolean> {
+  public async import(filePath: string, onSuccess: () => void): Promise<void> {
     this.init();
     await this.service.fileUtils.readlineUnzip(filePath, async line => {
       try {
@@ -69,6 +65,7 @@ export default class LogTugraphImporter extends Service {
     this.exportNodeMap = this.nodeMap;
     this.exportEdgeMap = this.edgeMap;
     (async () => {
+      this.logger.info(`Start to insert ${filePath}.`);
       try {
         await this.insertNodes();
       } catch (e) {
@@ -81,8 +78,8 @@ export default class LogTugraphImporter extends Service {
       }
       this.logger.info(`Insert ${filePath} done.`);
       this.isExporting = false;
+      onSuccess();
     })();
-    return true;
   }
 
   private init() {
@@ -197,18 +194,17 @@ export default class LogTugraphImporter extends Service {
       this.updateEdge('has_issue_change_request', repoId, getTuGraphIssueId(), -1, {}, createdAt);
 
       if (action === 'opened') {
-        this.updateEdge('open', actorId, getTuGraphIssueId(), eventId, { id: eventId, ...created_at }, createdAt);
+        this.updateEdge('action', actorId, getTuGraphIssueId(), eventId, { id: eventId, type: 'open', ...created_at }, createdAt);
       } else if (action === 'closed') {
-        this.updateEdge('close', actorId, getTuGraphIssueId(), eventId, { id: eventId, ...created_at }, createdAt);
+        this.updateEdge('action', actorId, getTuGraphIssueId(), eventId, { id: eventId, type: 'close', ...created_at }, createdAt);
       }
       return issue;
     };
 
     const parseIssueComment = () => {
-      parseIssue();
       const id = r.payload.comment.id;
       const body = r.payload.comment.body;
-      this.updateEdge('comment', actorId, getTuGraphIssueId(), id, { id, body, ...created_at }, createdAt);
+      this.updateEdge('action', actorId, getTuGraphIssueId(), id, { id, body, type: 'comment', ...created_at }, createdAt);
     };
 
     const parsePullRequest = () => {
@@ -219,14 +215,16 @@ export default class LogTugraphImporter extends Service {
       const changed_files = parseInt(pull.changed_files ?? 0);
       if (action === 'closed') {
         if (pull.merged) {
-          this.updateEdge('close', actorId, getTuGraphIssueId(), eventId, {
+          this.updateEdge('action', actorId, getTuGraphIssueId(), eventId, {
             id: eventId,
+            type: 'close',
             merged: true,
             ...created_at,
           }, createdAt);
         } else {
-          this.updateEdge('close', actorId, getTuGraphIssueId(), eventId, {
+          this.updateEdge('action', actorId, getTuGraphIssueId(), eventId, {
             id: eventId,
+            type: 'close',
             merged: false,
             ...created_at,
           }, createdAt);
@@ -289,8 +287,9 @@ export default class LogTugraphImporter extends Service {
       const body = review.body ?? '';
       const state = review.state ?? '';
       const id = review.id ?? 0;
-      this.updateEdge('review', actorId, getTuGraphIssueId(), id, {
+      this.updateEdge('action', actorId, getTuGraphIssueId(), id, {
         id,
+        type: 'review',
         body,
         state,
         ...created_at,
@@ -306,13 +305,14 @@ export default class LogTugraphImporter extends Service {
       const position = comment.position ?? 0;
       const line = comment.line ?? 0;
       const startLine = comment.start_line ?? 0;
-      this.updateEdge('review_comment', actorId, getTuGraphIssueId(), id, {
+      this.updateEdge('action', actorId, getTuGraphIssueId(), id, {
         id,
         body,
         path,
         position,
         line,
         start_line: startLine,
+        type: 'review_comment',
         ...created_at,
       }, createdAt);
     };
